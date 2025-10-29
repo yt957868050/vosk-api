@@ -7,14 +7,13 @@
     build-arm64:                                                                                                                                                                    
       runs-on: ubuntu-22.04                                                                                                                                                         
                                                                                                                                                                                     
-      steps:                                                                                                                                                                                                                                                                                                                               
-                                                                                                                                                                                    
-        # 主要构建步骤：在 arm64 Ubuntu 容器里编译 Vosk                                                                                                                             
+      steps:                                                                                                                                                                        
         - name: Build on arm64 container                                                                                                                                            
           uses: uraimo/run-on-arch-action@v2                                                                                                                                        
           with:                                                                                                                                                                     
             arch: arm64                                                                                                                                                             
             base_image: ubuntu:20.04                                                                                                                                                
+            # install 字段必须是一行，否则 YAML 会报错                                                                                                                              
             install: apt-get update && apt-get install -y git curl ca-certificates build-essential cmake ninja-build swig openjdk-8-jdk python3 python3-pip python3-setuptools maven libtool automake autoconf zlib1g-dev libopenblas-dev libomp5 libgfortran5 sox ffmpeg                                                                                              
             run: |                                                                                                                                                                  
               set -eux                                                                                                                                                              
@@ -22,8 +21,7 @@
               cd /tmp/vosk-build                                                                                                                                                    
               git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git                                                                                         
               cd vosk-api                                                                                                                                                           
-              ./travis/install-linux-deps.sh                                                                                                                                        
-              ./travis/install-kaldi.sh                                                                                                                                             
+              ./travis/install-linux.sh                                                                                                                                             
               make -C src                                                                                                                                                           
               make java                                                                                                                                                             
               strip java/lib/linux-aarch64/libvosk.so                                                                                                                               
@@ -33,13 +31,11 @@
               cp java/lib/linux-aarch64/libvosk_jni.so /github/workspace/artifacts/lib/                                                                                             
               cp java/lib/linux-aarch64/vosk.jar /github/workspace/artifacts/                                                                                                       
                                                                                                                                                                                     
-        # 输出产物列表，方便确认                                                                                                                                                    
         - name: Collect artifacts                                                                                                                                                   
           run: ls -R artifacts                                                                                                                                                      
                                                                                                                                                                                     
-        # 上传成 GitHub Actions Artifact                                                                                                                                            
         - name: Upload artifacts                                                                                                                                                    
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts      
+            path: artifacts   
