@@ -5,7 +5,7 @@
                                                                                                                                                                                     
   jobs:                                                                                                                                                                             
     build-arm64:                                                                                                                                                                    
-      runs-on: ubuntu-22.04-arm                                                                                                                                                     
+      runs-on: ubuntu-22.04-arm   # GitHub 原生 ARM64 runner                                                                                                                        
                                                                                                                                                                                     
       steps:                                                                                                                                                                        
         - uses: actions/checkout@v4                                                                                                                                                 
@@ -16,13 +16,17 @@
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
             sudo apt-get update                                                                                                                                                     
-            sudo apt-get install -y \                                                                                                                                               
-              git curl ca-certificates build-essential cmake ninja-build swig \                                                                                                     
-              openjdk-8-jdk python3 python3-pip python3-setuptools python-is-python3 \                                                                                              
-              python2 python2-dev wget unzip subversion gfortran \                                                                                                                  
-              maven libtool automake autoconf zlib1g-dev \                                                                                                                          
-              libopenblas-dev liblapacke-dev libomp5 libgfortran5 \                                                                                                                 
+            packages=(                                                                                                                                                              
+              git curl ca-certificates build-essential cmake ninja-build swig                                                                                                       
+              openjdk-8-jdk python3 python3-pip python3-setuptools python-is-python3                                                                                                
+              python2 python2-dev wget unzip subversion gfortran                                                                                                                    
+              maven libtool automake autoconf zlib1g-dev                                                                                                                            
+              libopenblas-dev liblapacke-dev libomp5 libgfortran5                                                                                                                   
               sox ffmpeg pkg-config                                                                                                                                                 
+            )                                                                                                                                                                       
+            sudo apt-get install -y "${packages[@]}"                                                                                                                                
+            sudo apt-get clean                                                                                                                                                      
+            sudo rm -rf /var/lib/apt/lists/*                                                                                                                                        
                                                                                                                                                                                     
         - name: Build Kaldi & Vosk                                                                                                                                                  
           env:                                                                                                                                                                      
@@ -81,4 +85,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts     
+            path: artifacts       
