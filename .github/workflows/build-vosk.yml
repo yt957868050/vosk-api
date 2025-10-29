@@ -21,7 +21,7 @@
               openjdk-8-jdk python3 python3-pip python3-setuptools python-is-python3                                                                                                
               python2 python2-dev wget unzip subversion gfortran                                                                                                                    
               maven libtool automake autoconf zlib1g-dev libomp5 libgfortran5                                                                                                       
-              sox ffmpeg pkg-config                                                                                                                                                 
+              sox ffmpeg pkg-config make                                                                                                                                            
             )                                                                                                                                                                       
             sudo apt-get install -y "${packages[@]}"                                                                                                                                
             sudo apt-get clean                                                                                                                                                      
@@ -35,21 +35,32 @@
                                                                                                                                                                                     
             WORKDIR="${PWD}"                                                                                                                                                        
             BUILD_DIR="${RUNNER_TEMP}/vosk-build"                                                                                                                                   
+            OPENBLAS_ROOT="${BUILD_DIR}/openblas-install"                                                                                                                           
             KALDI_DIR="${BUILD_DIR}/kaldi"                                                                                                                                          
             VOSK_DIR="${BUILD_DIR}/vosk-api"                                                                                                                                        
                                                                                                                                                                                     
-            mkdir -p "${BUILD_DIR}"                                                                                                                                                 
+            mkdir -p "${BUILD_DIR}" "${OPENBLAS_ROOT}"                                                                                                                              
+                                                                                                                                                                                    
+            OPENBLAS_VERSION="0.3.13"                                                                                                                                               
+            OPENBLAS_ARCHIVE="OpenBLAS-${OPENBLAS_VERSION}.tar.gz"                                                                                                                  
+            OPENBLAS_URL="https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/refs/tags/v${OPENBLAS_VERSION}"                                                                   
+                                                                                                                                                                                    
+            cd "${BUILD_DIR}"                                                                                                                                                       
+            curl -L "${OPENBLAS_URL}" -o "${OPENBLAS_ARCHIVE}"                                                                                                                      
+            OPENBLAS_SRC_DIR="${BUILD_DIR}/OpenBLAS-${OPENBLAS_VERSION}"                                                                                                            
+            tar -xf "${OPENBLAS_ARCHIVE}" -C "${BUILD_DIR}"                                                                                                                         
+            cd "${OPENBLAS_SRC_DIR}"                                                                                                                                                
+            make TARGET=ARMV8 BINARY=64                                                                                                                                             
+            make PREFIX="${OPENBLAS_ROOT}" install                                                                                                                                  
+            cd "${BUILD_DIR}"                                                                                                                                                       
+            rm -rf "${OPENBLAS_ARCHIVE}" "${OPENBLAS_SRC_DIR}"                                                                                                                      
                                                                                                                                                                                     
             git clone --depth 1 https://github.com/alphacep/kaldi.git "${KALDI_DIR}"                                                                                                
             export KALDI_ROOT="${KALDI_DIR}"                                                                                                                                        
                                                                                                                                                                                     
             cd "${KALDI_DIR}/tools"                                                                                                                                                 
             extras/check_dependencies.sh || true                                                                                                                                    
-            sed -i 's/xianyi-OpenBLAS-/OpenBLAS-/' extras/install_openblas.sh                                                                                                       
-            extras/install_openblas.sh                                                                                                                                              
             make                                                                                                                                                                    
-                                                                                                                                                                                    
-            OPENBLAS_ROOT="${KALDI_DIR}/tools/OpenBLAS/install"                                                                                                                     
                                                                                                                                                                                     
             cd "${KALDI_DIR}/src"                                                                                                                                                   
             ./configure --shared --static --use-cuda=no --openblas-root="${OPENBLAS_ROOT}"                                                                                          
@@ -80,4 +91,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts 
+            path: artifacts   
