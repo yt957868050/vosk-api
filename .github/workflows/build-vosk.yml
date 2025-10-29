@@ -29,7 +29,6 @@
             MAKEFLAGS: "-j2"                                                                                                                                                        
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
-                                                                                                                                                                                    
             WORKDIR="${PWD}"                                                                                                                                                        
             BUILD_DIR="${RUNNER_TEMP}/vosk-build"                                                                                                                                   
             KALDI_DIR="${BUILD_DIR}/kaldi"                                                                                                                                          
@@ -38,16 +37,14 @@
                                                                                                                                                                                     
             mkdir -p "${BUILD_DIR}" "${OPENBLAS_ROOT}/lib"                                                                                                                          
                                                                                                                                                                                     
-            # 收集系统 OpenBLAS (及 lapacke) 库，Kaldi configure 只认 lib/libopenblas.so                                                                                            
-            for so in /usr/lib/aarch64-linux-gnu/libopenblas.so*; do                                                                                                                
-              cp -L "${so}" "${OPENBLAS_ROOT}/lib/"                                                                                                                                 
+            for lib in /usr/lib/aarch64-linux-gnu/libopenblas.so*; do                                                                                                               
+              cp -L "$lib" "${OPENBLAS_ROOT}/lib/"                                                                                                                                  
             done                                                                                                                                                                    
-            for so in /usr/lib/aarch64-linux-gnu/liblapacke.so*; do                                                                                                                 
-              cp -L "${so}" "${OPENBLAS_ROOT}/lib/"                                                                                                                                 
+            for lib in /usr/lib/aarch64-linux-gnu/liblapacke.so*; do                                                                                                                
+              cp -L "$lib" "${OPENBLAS_ROOT}/lib/"                                                                                                                                  
             done                                                                                                                                                                    
             ln -s /usr/include "${OPENBLAS_ROOT}/include"                                                                                                                           
                                                                                                                                                                                     
-            # -- Kaldi --                                                                                                                                                           
             git clone --depth 1 https://github.com/alphacep/kaldi.git "${KALDI_DIR}"                                                                                                
             export KALDI_ROOT="${KALDI_DIR}"                                                                                                                                        
                                                                                                                                                                                     
@@ -60,13 +57,10 @@
             make clean                                                                                                                                                              
             make                                                                                                                                                                    
                                                                                                                                                                                     
-            # -- Vosk JNI --                                                                                                                                                        
             git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git "${VOSK_DIR}"                                                                             
             cd "${VOSK_DIR}"                                                                                                                                                        
                                                                                                                                                                                     
-            export KALDI_ROOT="${KALDI_DIR}"                                                                                                                                        
             export LD_LIBRARY_PATH="${KALDI_ROOT}/src/lib:${LD_LIBRARY_PATH:-}"                                                                                                     
-                                                                                                                                                                                    
             make -C src                                                                                                                                                             
             make java                                                                                                                                                               
                                                                                                                                                                                     
@@ -87,5 +81,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts                                                                                                                                                         
-                                
+            path: artifacts     
