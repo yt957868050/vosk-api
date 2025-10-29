@@ -1,9 +1,9 @@
  name: Build Vosk ARM64 JNI                                                                                                                                                        
                                                                                                                                                                                     
-  on:                                                                                                                                                                               
+ on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-  jobs:                                                                                                                                                                             
+ jobs:                                                                                                                                                                             
     build-arm64:                                                                                                                                                                    
       runs-on: ubuntu-22.04                                                                                                                                                         
                                                                                                                                                                                     
