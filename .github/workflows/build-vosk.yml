@@ -27,12 +27,11 @@
             sudo apt-get clean                                                                                                                                                      
             sudo rm -rf /var/lib/apt/lists/*                                                                                                                                        
                                                                                                                                                                                     
-        - name: Build Kaldi & Vosk                                                                                                                                                  
+        - name: Build artifacts                                                                                                                                                     
           env:                                                                                                                                                                      
             MAKEFLAGS: "-j2"                                                                                                                                                        
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
-                                                                                                                                                                                    
             WORKDIR="${PWD}"                                                                                                                                                        
             BUILD_DIR="${RUNNER_TEMP}/vosk-build"                                                                                                                                   
             OPENBLAS_ROOT="${BUILD_DIR}/openblas-install"                                                                                                                           
@@ -47,8 +46,8 @@
                                                                                                                                                                                     
             cd "${BUILD_DIR}"                                                                                                                                                       
             curl -L "${OPENBLAS_URL}" -o "${OPENBLAS_ARCHIVE}"                                                                                                                      
+            tar -xf "${OPENBLAS_ARCHIVE}"                                                                                                                                           
             OPENBLAS_SRC_DIR="${BUILD_DIR}/OpenBLAS-${OPENBLAS_VERSION}"                                                                                                            
-            tar -xf "${OPENBLAS_ARCHIVE}" -C "${BUILD_DIR}"                                                                                                                         
             cd "${OPENBLAS_SRC_DIR}"                                                                                                                                                
             make TARGET=ARMV8 BINARY=64                                                                                                                                             
             make PREFIX="${OPENBLAS_ROOT}" install                                                                                                                                  
@@ -69,6 +68,27 @@
                                                                                                                                                                                     
             git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git "${VOSK_DIR}"                                                                             
             cd "${VOSK_DIR}"                                                                                                                                                        
+                                                                                                                                                                                    
+  python3 <<'PY'                                                                                                                                                                    
+  from pathlib import Path                                                                                                                                                          
+                                                                                                                                                                                    
+  path = Path("src/recognizer.cc")                                                                                                                                                  
+  code = path.read_text()                                                                                                                                                           
+                                                                                                                                                                                    
+  include_line = '#include "lat/word-align-lattice.h"'                                                                                                                              
+  if include_line not in code:                                                                                                                                                      
+      code = code.replace(                                                                                                                                                          
+          '#include "decoder/decoder-wrappers.h"\n',                                                                                                                                
+          '#include "decoder/decoder-wrappers.h"\n' + include_line + "\n",                                                                                                          
+          1,                                                                                                                                                                        
+      )                                                                                                                                                                             
+  code = code.replace(                                                                                                                                                              
+      '        WordAlignLatticePartial(',                                                                                                                                           
+      '        kaldi::WordAlignLatticePartial(',                                                                                                                                    
+      1,                                                                                                                                                                            
+  )                                                                                                                                                                                 
+  path.write_text(code)                                                                                                                                                             
+  PY                                                                                                                                                                                
                                                                                                                                                                                     
             export LD_LIBRARY_PATH="${KALDI_ROOT}/src/lib:${LD_LIBRARY_PATH:-}"                                                                                                     
             make -C src                                                                                                                                                             
@@ -91,4 +111,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts   
+            path: artifacts      
