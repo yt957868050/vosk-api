@@ -24,8 +24,7 @@ jobs:
             arch: arm64                                                                                                                                                             
             base_image: ubuntu:20.04                                                                                                                                                
             install: |                                                                                                                                                              
-              apt-get update && apt-get install -y git curl build-essential cmake ninja-build swig openjdk-11-jdk python3 python3-pip python3-setuptools maven libtool automake     
-  autoconf zlib1g-dev libopenblas-dev libomp5 libgfortran5 sox ffmpeg                                                                                                               
+              apt-get update && apt-get install -y git curl build-essential cmake ninja-build swig openjdk-11-jdk python3 python3-pip python3-setuptools maven libtool automake autoconf zlib1g-dev libopenblas-dev libomp5 libgfortran5 sox ffmpeg                                                                                                               
             run: |                                                                                                                                                                  
               set -eux                                                                                                                                                              
               cd /github/workspace/vosk                                                                                                                                             
