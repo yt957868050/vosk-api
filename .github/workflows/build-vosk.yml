@@ -8,49 +8,61 @@
       runs-on: ubuntu-22.04                                                                                                                                                         
                                                                                                                                                                                     
       steps:                                                                                                                                                                        
-        - name: Build on arm64 container                                                                                                                                            
+        - name: Build in arm64 container                                                                                                                                            
           uses: uraimo/run-on-arch-action@v2                                                                                                                                        
           with:                                                                                                                                                                     
             arch: arm64                                                                                                                                                             
             base_image: ubuntu:20.04                                                                                                                                                
-            install: apt-get update && apt-get install -y git curl ca-certificates build-essential cmake ninja-build swig openjdk-8-jdk python3 python3-pip python3-setuptools maven libtool automake autoconf zlib1g-dev libopenblas-dev libomp5 libgfortran5 sox ffmpeg                                                                                              
+            install: >                                                                                                                                                              
+              apt-get update && apt-get install -y                                                                                                                                  
+              git curl ca-certificates build-essential cmake ninja-build swig                                                                                                       
+              openjdk-8-jdk python3 python3-pip python3-setuptools maven                                                                                                            
+              libtool automake autoconf zlib1g-dev libopenblas-dev libomp5 libgfortran5                                                                                             
+              sox ffmpeg                                                                                                                                                            
             run: |                                                                                                                                                                  
               set -eux                                                                                                                                                              
+              NPROC=$(nproc || echo 2)                                                                                                                                              
                                                                                                                                                                                     
-              # 1. 准备源码                                                                                                                                                         
+              # --- 1. 编译 Kaldi ---                                                                                                                                               
               mkdir -p /tmp/vosk-build                                                                                                                                              
+              cd /tmp/vosk-build                                                                                                                                                    
+              git clone --depth 1 https://github.com/alphacep/kaldi.git                                                                                                             
+              export KALDI_ROOT=/tmp/vosk-build/kaldi                                                                                                                               
+                                                                                                                                                                                    
+              cd ${KALDI_ROOT}/tools                                                                                                                                                
+              extras/check_dependencies.sh || true    # 若缺包会提示；大部分我们已经提前装好                                                                                        
+              make -j${NPROC}                                                                                                                                                       
+                                                                                                                                                                                    
+              cd ${KALDI_ROOT}/src                                                                                                                                                  
+              ./configure --shared --static --use-cuda=no --mathlib=OPENBLAS                                                                                                        
+              make clean                                                                                                                                                            
+              make -j${NPROC}                                                                                                                                                       
+                                                                                                                                                                                    
+              # --- 2. 编译 Vosk ---                                                                                                                                                
               cd /tmp/vosk-build                                                                                                                                                    
               git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git                                                                                         
               cd vosk-api                                                                                                                                                           
                                                                                                                                                                                     
-              # 2. 下载 master 分支上的 Kaldi 安装脚本                                                                                                                              
-              curl -L https://raw.githubusercontent.com/alphacep/vosk-api/master/travis/install-linux-kaldi-deps.sh -o travis/install-linux-kaldi-deps.sh                           
-              curl -L https://raw.githubusercontent.com/alphacep/vosk-api/master/travis/install-kaldi.sh -o travis/install-kaldi.sh                                                 
-              chmod +x travis/install-linux-kaldi-deps.sh travis/install-kaldi.sh                                                                                                   
+              export KALDI_ROOT=/tmp/vosk-build/kaldi                                                                                                                               
+              export LD_LIBRARY_PATH="${KALDI_ROOT}/src/lib:${LD_LIBRARY_PATH:-}"                                                                                                   
                                                                                                                                                                                     
-              # 3. 安装依赖 + 编译 Kaldi                                                                                                                                            
-              ./travis/install-linux-kaldi-deps.sh                                                                                                                                  
-              ./travis/install-kaldi.sh                                                                                                                                             
-                                                                                                                                                                                    
-              # 4. 构建 Vosk JNI                                                                                                                                                    
               make -C src                                                                                                                                                           
               make java                                                                                                                                                             
                                                                                                                                                                                     
-              # 5. （可选）去掉调试符号                                                                                                                                             
               strip java/lib/linux-aarch64/libvosk.so                                                                                                                               
               strip java/lib/linux-aarch64/libvosk_jni.so                                                                                                                           
                                                                                                                                                                                     
-              # 6. 收集产物到宿主工作区                                                                                                                                             
+              # --- 3. 拷贝到宿主工作区 ---                                                                                                                                         
               mkdir -p /github/workspace/artifacts/lib                                                                                                                              
-              cp java/lib/linux-aarch64/libvosk.so /github/workspace/artifacts/lib/                                                                                                 
-              cp java/lib/linux-aarch64/libvosk_jni.so /github/workspace/artifacts/lib/                                                                                             
-              cp java/lib/linux-aarch64/vosk.jar /github/workspace/artifacts/                                                                                                       
+              cp java/lib/linux-aarch64/libvosk.so      /github/workspace/artifacts/lib/                                                                                            
+              cp java/lib/linux-aarch64/libvosk_jni.so  /github/workspace/artifacts/lib/                                                                                            
+              cp java/lib/linux-aarch64/vosk.jar        /github/workspace/artifacts/                                                                                                
                                                                                                                                                                                     
-        - name: Collect artifacts                                                                                                                                                   
+        - name: List artifacts                                                                                                                                                      
           run: ls -R artifacts                                                                                                                                                      
                                                                                                                                                                                     
         - name: Upload artifacts                                                                                                                                                    
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts 
+            path: artifacts      
