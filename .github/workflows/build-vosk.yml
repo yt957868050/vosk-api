@@ -1,57 +1,26 @@
-name: Build Vosk ARM64 JNI                                                                                                                                                        
+  name: Build Vosk ARM64 JNI                                                                                                                                                        
                                                                                                                                                                                     
-on:                                                                                                                                                                               
-  workflow_dispatch:                                                                                                                                                              
+  on:                                                                                                                                                                               
+    workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-jobs:                                                                                                                                                                             
-    build-arm64:                                                                                                                                                                    
-      runs-on: ubuntu-22.04  # x86_64 runner                                                                                                                                        
-      defaults:                                                                                                                                                                     
-        run:                                                                                                                                                                        
-          shell: bash                                                                                                                                                               
+  jobs:                                                                                                                                                                             
+    build:                                                                                                                                                                          
+      runs-on: ubuntu-22.04                                                                                                                                                         
                                                                                                                                                                                     
       steps:                                                                                                                                                                        
-        - name: Checkout Vosk                                                                                                                                                       
-          uses: actions/checkout@v4                                                                                                                                                 
+                                                                                                                                                       
+                                                                                                                                                                                    
+        # 再 checkout 官方 vosk-api                                                                                                                                                 
+        - uses: actions/checkout@v4                                                                                                                                                 
           with:                                                                                                                                                                     
-            submodules: true                                                                                                                                                        
-            ref: v0.3.45  # 需要的话指定版号                                                                                                                                        
+            repository: alphacep/vosk-api                                                                                                                                           
+            ref: refs/tags/v0.3.45   # 也可写某个分支/commit                                                                                                                        
+            submodules: true         # 需要 Kaldi/OpenFST 的话                                                                                                                      
+            fetch-depth: 0           # 取完整历史、便于子模块递归                                                                                                                   
+            path: vosk               # 放到指定子目录                                                                                                                               
                                                                                                                                                                                     
-        - name: Install build prerequisites                                                                                                                                         
-          run: |                                                                                                                                                                    
-            sudo apt-get update                                                                                                                                                     
-            sudo apt-get install -y \                                                                                                                                               
-              build-essential cmake swig \                                                                                                                                          
-              python3 python3-pip ninja-build \                                                                                                                                     
-              openjdk-11-jdk maven \                                                                                                                                                
-              g++-aarch64-linux-gnu \                                                                                                                                               
-              libopenblas-dev libomp5 libgfortran5 zlib1g-dev                                                                                                                       
-                                                                                                                                                                                    
-        - name: Configure cross compiler                                                                                                                                            
-          run: |                                                                                                                                                                    
-            export CC=aarch64-linux-gnu-gcc                                                                                                                                         
-            export CXX=aarch64-linux-gnu-g++                                                                                                                                        
-            export AR=aarch64-linux-gnu-ar                                                                                                                                          
-            export LD=aarch64-linux-gnu-ld                                                                                                                                          
-            export STRIP=aarch64-linux-gnu-strip                                                                                                                                    
-            # 如果 vosk 的 Makefile 支持 CC/CXX，就可以直接调用                                                                                                                     
-                                                                                                                                                                                    
-        - name: Build Kaldi/OpenFST deps                                                                                                                                            
+        - name: Build vosk                                                                                                                                                          
+          working-directory: vosk                                                                                                                                                   
           run: |                                                                                                                                                                    
             make -C src                                                                                                                                                             
-                                                                                                                                                                                    
-        - name: Build Java JNI                                                                                                                                                      
-          run: |                                                                                                                                                                    
-            make java                                                                                                                                                               
-                                                                                                                                                                                    
-        - name: Collect artifacts                                                                                                                                                   
-          run: |                                                                                                                                                                    
-            mkdir -p artifacts/lib                                                                                                                                                  
-            cp java/lib/linux-aarch64/libvosk.so artifacts/lib/                                                                                                                     
-            cp java/lib/linux-aarch64/libvosk_jni.so artifacts/lib/                                                                                                                 
-            cp java/lib/linux-aarch64/vosk.jar artifacts/                                                                                                                           
-        - name: Upload artifacts                                                                                                                                                    
-          uses: actions/upload-artifact@v4                                                                                                                                          
-          with:                                                                                                                                                                     
-            name: vosk-arm64                                                                                                                                                        
-            path: artifacts      
+            make java  
