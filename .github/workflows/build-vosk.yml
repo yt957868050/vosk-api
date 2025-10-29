@@ -1,17 +1,14 @@
+name: Build Vosk ARM64 JNI                                                                                                                                                        
                                                                                                                                                                                     
-  name: Build Vosk ARM64 JNI                                                                                                                                                        
-                                                                                                                                                                                    
-  on:                                                                                                                                                                               
+on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-  jobs:                                                                                                                                                                             
+jobs:                                                                                                                                                                             
     build-arm64:                                                                                                                                                                    
       runs-on: ubuntu-22.04                                                                                                                                                         
                                                                                                                                                                                     
       steps:                                                                                                                                                                        
-                                                                                                                                                         
-                                                                                                                                                                                    
-        # 拉取官方 vosk-api 源码                                                                                                                                                    
+                                                                                                                                                    
         - name: Checkout official vosk-api                                                                                                                                          
           uses: actions/checkout@v4                                                                                                                                                 
           with:                                                                                                                                                                     
@@ -21,20 +18,14 @@
             fetch-depth: 0                                                                                                                                                          
             path: vosk                                                                                                                                                              
                                                                                                                                                                                     
-        # 在 arm64 Ubuntu 容器里执行编译                                                                                                                                            
         - name: Build on arm64 container                                                                                                                                            
           uses: uraimo/run-on-arch-action@v2                                                                                                                                        
           with:                                                                                                                                                                     
             arch: arm64                                                                                                                                                             
-            base_image: ubuntu:20.04   # 换成官方多架构镜像                                                                                                                         
+            base_image: ubuntu:20.04                                                                                                                                                
             install: |                                                                                                                                                              
-              apt-get update                                                                                                                                                        
-              apt-get install -y \                                                                                                                                                  
-                git curl build-essential cmake ninja-build swig \                                                                                                                   
-                openjdk-11-jdk python3 python3-pip python3-setuptools \                                                                                                             
-                maven libtool automake autoconf \                                                                                                                                   
-                zlib1g-dev libopenblas-dev libomp5 libgfortran5 \                                                                                                                   
-                sox ffmpeg                                                                                                                                                          
+              apt-get update && apt-get install -y git curl build-essential cmake ninja-build swig openjdk-11-jdk python3 python3-pip python3-setuptools maven libtool automake     
+  autoconf zlib1g-dev libopenblas-dev libomp5 libgfortran5 sox ffmpeg                                                                                                               
             run: |                                                                                                                                                                  
               set -eux                                                                                                                                                              
               cd /github/workspace/vosk                                                                                                                                             
@@ -45,7 +36,6 @@
               strip java/lib/linux-aarch64/libvosk.so                                                                                                                               
               strip java/lib/linux-aarch64/libvosk_jni.so                                                                                                                           
                                                                                                                                                                                     
-        # 收集编译产物                                                                                                                                                              
         - name: Collect artifacts                                                                                                                                                   
           run: |                                                                                                                                                                    
             mkdir -p artifacts/lib                                                                                                                                                  
@@ -54,10 +44,9 @@
             cp vosk/java/lib/linux-aarch64/vosk.jar artifacts/                                                                                                                      
             ls -R artifacts                                                                                                                                                         
                                                                                                                                                                                     
-        # 上传产物供下载                                                                                                                                                            
         - name: Upload artifacts                                                                                                                                                    
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
             path: artifacts                                                                                                                                                         
-                               
+                                               
