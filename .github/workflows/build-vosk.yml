@@ -1,9 +1,9 @@
-name: Build Vosk ARM64 JNI                                                                                                                                                        
+  name: Build Vosk ARM64 JNI                                                                                                                                                        
                                                                                                                                                                                     
-on:                                                                                                                                                                               
+  on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-jobs:                                                                                                                                                                             
+  jobs:                                                                                                                                                                             
     build-arm64:                                                                                                                                                                    
       runs-on: ubuntu-22.04                                                                                                                                                         
                                                                                                                                                                                     
@@ -24,13 +24,16 @@ jobs:
               set -eux                                                                                                                                                              
               NPROC=$(nproc || echo 2)                                                                                                                                              
                                                                                                                                                                                     
+              # 准备 OpenBLAS 根目录                                                                                                                                                
               OPENBLAS_ROOT=/tmp/openblas-root                                                                                                                                      
-              mkdir -p ${OPENBLAS_ROOT}                                                                                                                                             
-              ln -sf /usr/lib/aarch64-linux-gnu ${OPENBLAS_ROOT}/lib                                                                                                                
-              ln -sf /usr/include                        ${OPENBLAS_ROOT}/include                                                                                                   
-              ln -sf /usr/lib/aarch64-linux-gnu/libopenblas.so /usr/lib/libopenblas.so || true                                                                                      
-              ln -sf /usr/lib/aarch64-linux-gnu/libopenblas.so.0 /usr/lib/libopenblas.so.0 || true                                                                                  
+              mkdir -p ${OPENBLAS_ROOT}/lib ${OPENBLAS_ROOT}/include                                                                                                                
+              sb_base=/usr/lib/aarch64-linux-gnu                                                                                                                                    
+              [ -f ${sb_base}/libopenblas.so ] || ln -sf ${sb_base}/libopenblas.so.0 ${sb_base}/libopenblas.so                                                                      
+              ln -sf ${sb_base}/libopenblas.so    ${OPENBLAS_ROOT}/lib/libopenblas.so                                                                                               
+              ln -sf ${sb_base}/libopenblas.so.0  ${OPENBLAS_ROOT}/lib/libopenblas.so.0                                                                                             
+              ln -sf /usr/include                 ${OPENBLAS_ROOT}/include                                                                                                          
                                                                                                                                                                                     
+              # 1. Kaldi                                                                                                                                                            
               mkdir -p /tmp/vosk-build                                                                                                                                              
               cd /tmp/vosk-build                                                                                                                                                    
               git clone --depth 1 https://github.com/alphacep/kaldi.git                                                                                                             
@@ -45,6 +48,7 @@ jobs:
               make clean                                                                                                                                                            
               make -j${NPROC}                                                                                                                                                       
                                                                                                                                                                                     
+              # 2. Vosk                                                                                                                                                             
               cd /tmp/vosk-build                                                                                                                                                    
               git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git                                                                                         
               cd vosk-api                                                                                                                                                           
@@ -70,4 +74,4 @@ jobs:
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts  
+            path: artifacts      
