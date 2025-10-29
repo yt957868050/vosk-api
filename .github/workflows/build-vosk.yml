@@ -69,26 +69,8 @@
             git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git "${VOSK_DIR}"                                                                             
             cd "${VOSK_DIR}"                                                                                                                                                        
                                                                                                                                                                                     
-  python3 <<'PY'                                                                                                                                                                    
-  from pathlib import Path                                                                                                                                                          
-                                                                                                                                                                                    
-  path = Path("src/recognizer.cc")                                                                                                                                                  
-  code = path.read_text()                                                                                                                                                           
-                                                                                                                                                                                    
-  include_line = '#include "lat/word-align-lattice.h"'                                                                                                                              
-  if include_line not in code:                                                                                                                                                      
-      code = code.replace(                                                                                                                                                          
-          '#include "decoder/decoder-wrappers.h"\n',                                                                                                                                
-          '#include "decoder/decoder-wrappers.h"\n' + include_line + "\n",                                                                                                          
-          1,                                                                                                                                                                        
-      )                                                                                                                                                                             
-  code = code.replace(                                                                                                                                                              
-      '        WordAlignLatticePartial(',                                                                                                                                           
-      '        kaldi::WordAlignLatticePartial(',                                                                                                                                    
-      1,                                                                                                                                                                            
-  )                                                                                                                                                                                 
-  path.write_text(code)                                                                                                                                                             
-  PY                                                                                                                                                                                
+            sed -i 's/#include "decoder\/decoder-wrappers.h"/&\n#include "lat\/word-align-lattice.h"/' src/recognizer.cc                                                            
+            sed -i 's/        WordAlignLatticePartial(/        kaldi::WordAlignLatticePartial(/' src/recognizer.cc                                                                  
                                                                                                                                                                                     
             export LD_LIBRARY_PATH="${KALDI_ROOT}/src/lib:${LD_LIBRARY_PATH:-}"                                                                                                     
             make -C src                                                                                                                                                             
@@ -111,4 +93,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts      
+            path: artifacts    
