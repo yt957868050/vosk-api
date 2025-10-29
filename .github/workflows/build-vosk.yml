@@ -24,16 +24,25 @@
               set -eux                                                                                                                                                              
               NPROC=$(nproc || echo 2)                                                                                                                                              
                                                                                                                                                                                     
-              # 准备 OpenBLAS 根目录                                                                                                                                                
+              # --- 准备 OPENBLAS_ROOT ---                                                                                                                                          
               OPENBLAS_ROOT=/tmp/openblas-root                                                                                                                                      
               mkdir -p ${OPENBLAS_ROOT}/lib ${OPENBLAS_ROOT}/include                                                                                                                
-              sb_base=/usr/lib/aarch64-linux-gnu                                                                                                                                    
-              [ -f ${sb_base}/libopenblas.so ] || ln -sf ${sb_base}/libopenblas.so.0 ${sb_base}/libopenblas.so                                                                      
-              ln -sf ${sb_base}/libopenblas.so    ${OPENBLAS_ROOT}/lib/libopenblas.so                                                                                               
-              ln -sf ${sb_base}/libopenblas.so.0  ${OPENBLAS_ROOT}/lib/libopenblas.so.0                                                                                             
-              ln -sf /usr/include                 ${OPENBLAS_ROOT}/include                                                                                                          
                                                                                                                                                                                     
-              # 1. Kaldi                                                                                                                                                            
+              OPENBLAS_SO=$(find /usr/lib -name 'libopenblas.so' -o -name 'libopenblas.so.*' | head -n1)                                                                            
+              if [ -z "${OPENBLAS_SO}" ]; then                                                                                                                                      
+                echo "OpenBLAS library not found"; exit 1                                                                                                                           
+              fi                                                                                                                                                                    
+              cp -L "${OPENBLAS_SO}" ${OPENBLAS_ROOT}/lib/libopenblas.so                                                                                                            
+                                                                                                                                                                                    
+              if [ -f "${OPENBLAS_SO}.0" ]; then                                                                                                                                    
+                cp -L "${OPENBLAS_SO}.0" ${OPENBLAS_ROOT}/lib/libopenblas.so.0                                                                                                      
+              else                                                                                                                                                                  
+                cp -L "${OPENBLAS_SO}" ${OPENBLAS_ROOT}/lib/libopenblas.so.0                                                                                                        
+              fi                                                                                                                                                                    
+                                                                                                                                                                                    
+              ln -sf /usr/include ${OPENBLAS_ROOT}/include                                                                                                                          
+                                                                                                                                                                                    
+              # --- 1. 构建 Kaldi ---                                                                                                                                               
               mkdir -p /tmp/vosk-build                                                                                                                                              
               cd /tmp/vosk-build                                                                                                                                                    
               git clone --depth 1 https://github.com/alphacep/kaldi.git                                                                                                             
@@ -48,7 +57,7 @@
               make clean                                                                                                                                                            
               make -j${NPROC}                                                                                                                                                       
                                                                                                                                                                                     
-              # 2. Vosk                                                                                                                                                             
+              # --- 2. 构建 Vosk JNI ---                                                                                                                                            
               cd /tmp/vosk-build                                                                                                                                                    
               git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git                                                                                         
               cd vosk-api                                                                                                                                                           
@@ -74,4 +83,5 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts      
+            path: artifacts                                                                                                                                                         
+                             
