@@ -1,4 +1,4 @@
-  name: Build Vosk ARM64 JNI                                                                                                                                                        
+ name: Build Vosk ARM64 JNI                                                                                                                                                        
                                                                                                                                                                                     
   on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
@@ -24,23 +24,22 @@
               set -eux                                                                                                                                                              
               NPROC=$(nproc || echo 2)                                                                                                                                              
                                                                                                                                                                                     
+              # --- 1. Kaldi ---                                                                                                                                                    
               mkdir -p /tmp/vosk-build                                                                                                                                              
               cd /tmp/vosk-build                                                                                                                                                    
               git clone --depth 1 https://github.com/alphacep/kaldi.git                                                                                                             
               export KALDI_ROOT=/tmp/vosk-build/kaldi                                                                                                                               
                                                                                                                                                                                     
               cd ${KALDI_ROOT}/tools                                                                                                                                                
-              extras/check_dependencies.sh || true   # 需要 MKL 的提示可以忽略                                                                                                      
+              extras/check_dependencies.sh || true                                                                                                                                  
               make -j${NPROC}                                                                                                                                                       
-                                                                                                                                                                                    
-              cd ${KALDI_ROOT}/extras                                                                                                                                               
-              ./install_openfst.sh || true           # 如果失败会重试 openslr 的镜像                                                                                                
                                                                                                                                                                                     
               cd ${KALDI_ROOT}/src                                                                                                                                                  
               ./configure --shared --static --use-cuda=no --mathlib=OPENBLAS                                                                                                        
               make clean                                                                                                                                                            
               make -j${NPROC}                                                                                                                                                       
                                                                                                                                                                                     
+              # --- 2. Vosk ---                                                                                                                                                     
               cd /tmp/vosk-build                                                                                                                                                    
               git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git                                                                                         
               cd vosk-api                                                                                                                                                           
@@ -66,4 +65,5 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts    
+            path: artifacts                                                                                                                                                         
+                                           
