@@ -24,7 +24,7 @@
               set -eux                                                                                                                                                              
               NPROC=$(nproc || echo 2)                                                                                                                                              
                                                                                                                                                                                     
-              # 1. 构建 Kaldi                                                                                                                                                       
+              # 1. Kaldi                                                                                                                                                            
               mkdir -p /tmp/vosk-build                                                                                                                                              
               cd /tmp/vosk-build                                                                                                                                                    
               git clone --depth 1 https://github.com/alphacep/kaldi.git                                                                                                             
@@ -32,15 +32,14 @@
                                                                                                                                                                                     
               cd ${KALDI_ROOT}/tools                                                                                                                                                
               extras/check_dependencies.sh || true                                                                                                                                  
-              extras/install_openblas.sh                                                                                                                                            
               make -j${NPROC}                                                                                                                                                       
                                                                                                                                                                                     
               cd ${KALDI_ROOT}/src                                                                                                                                                  
-              ./configure --shared --static --use-cuda=no --mathlib=OPENBLAS                                                                                                        
+              ./configure --shared --static --use-cuda=no --openblas-root=/usr                                                                                                      
               make clean                                                                                                                                                            
               make -j${NPROC}                                                                                                                                                       
                                                                                                                                                                                     
-              # 2. 构建 Vosk JNI                                                                                                                                                    
+              # 2. Vosk JNI                                                                                                                                                         
               cd /tmp/vosk-build                                                                                                                                                    
               git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git                                                                                         
               cd vosk-api                                                                                                                                                           
@@ -54,7 +53,6 @@
               strip java/lib/linux-aarch64/libvosk.so                                                                                                                               
               strip java/lib/linux-aarch64/libvosk_jni.so                                                                                                                           
                                                                                                                                                                                     
-              # 3. 收集产物                                                                                                                                                         
               mkdir -p /github/workspace/artifacts/lib                                                                                                                              
               cp java/lib/linux-aarch64/libvosk.so /github/workspace/artifacts/lib/                                                                                                 
               cp java/lib/linux-aarch64/libvosk_jni.so /github/workspace/artifacts/lib/                                                                                             
@@ -67,4 +65,5 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts 
+            path: artifacts                                                                                                                                                         
+                              
