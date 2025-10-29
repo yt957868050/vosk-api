@@ -32,6 +32,7 @@
                                                                                                                                                                                     
               cd ${KALDI_ROOT}/tools                                                                                                                                                
               extras/check_dependencies.sh || true                                                                                                                                  
+              extras/install_openblas.sh                                                                                                                                            
               make -j${NPROC}                                                                                                                                                       
                                                                                                                                                                                     
               cd ${KALDI_ROOT}/src                                                                                                                                                  
@@ -65,5 +66,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts                                                                                                                                                         
-                                           
+            path: artifacts                 
