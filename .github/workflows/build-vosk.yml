@@ -21,7 +21,7 @@
               openjdk-8-jdk python3 python3-pip python3-setuptools python-is-python3                                                                                                
               python2 python2-dev wget unzip subversion gfortran                                                                                                                    
               maven libtool automake autoconf zlib1g-dev libomp5 libgfortran5                                                                                                       
-              sox ffmpeg pkg-config make                                                                                                                                            
+              sox ffmpeg pkg-config make liblapack-dev                                                                                                                              
             )                                                                                                                                                                       
             sudo apt-get install -y "${packages[@]}"                                                                                                                                
             sudo apt-get clean                                                                                                                                                      
@@ -58,6 +58,12 @@
             export KALDI_ROOT="${KALDI_DIR}"                                                                                                                                        
             mkdir -p "${KALDI_ROOT}/tools/OpenBLAS"                                                                                                                                 
             ln -sfn "${OPENBLAS_ROOT}" "${KALDI_ROOT}/tools/OpenBLAS/install"                                                                                                       
+            if [ -f /usr/lib/aarch64-linux-gnu/liblapack.a ]; then                                                                                                                  
+              ln -sfn /usr/lib/aarch64-linux-gnu/liblapack.a "${KALDI_ROOT}/tools/OpenBLAS/install/lib/liblapack.a"                                                                 
+            fi                                                                                                                                                                      
+            if [ -f /usr/lib/aarch64-linux-gnu/liblapacke.a ]; then                                                                                                                 
+              ln -sfn /usr/lib/aarch64-linux-gnu/liblapacke.a "${KALDI_ROOT}/tools/OpenBLAS/install/lib/liblapacke.a"                                                               
+            fi                                                                                                                                                                      
                                                                                                                                                                                     
             cd "${KALDI_DIR}/tools"                                                                                                                                                 
             extras/check_dependencies.sh || true                                                                                                                                    
@@ -72,7 +78,7 @@
             cd "${VOSK_DIR}"                                                                                                                                                        
                                                                                                                                                                                     
             sed -i 's/#include "decoder\/decoder-wrappers.h"/&\n#include "lat\/word-align-lattice.h"/' src/recognizer.cc                                                            
-            sed -i 's/        WordAlignLatticePartial(/        kaldi::WordAlignLattice(/' src/recognizer.cc                                                                     
+            sed -i 's/        WordAlignLatticePartial(/        kaldi::WordAlignLattice(/' src/recognizer.cc                                                                         
                                                                                                                                                                                     
             export LD_LIBRARY_PATH="${KALDI_ROOT}/src/lib:${LD_LIBRARY_PATH:-}"                                                                                                     
             make -C src                                                                                                                                                             
@@ -95,4 +101,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts    
+            path: artifacts            
