@@ -27,7 +27,7 @@
             sudo apt-get clean                                                                                                                                                      
             sudo rm -rf /var/lib/apt/lists/*                                                                                                                                        
                                                                                                                                                                                     
-        - name: Build artifacts                                                                                                                                                     
+        - name: Build Kaldi & Vosk                                                                                                                                                  
           env:                                                                                                                                                                      
             MAKEFLAGS: "-j2"                                                                                                                                                        
           run: |                                                                                                                                                                    
@@ -56,13 +56,19 @@
                                                                                                                                                                                     
             git clone --depth 1 https://github.com/alphacep/kaldi.git "${KALDI_DIR}"                                                                                                
             export KALDI_ROOT="${KALDI_DIR}"                                                                                                                                        
+                                                                                                                                                                                    
             mkdir -p "${KALDI_ROOT}/tools/OpenBLAS"                                                                                                                                 
             ln -sfn "${OPENBLAS_ROOT}" "${KALDI_ROOT}/tools/OpenBLAS/install"                                                                                                       
+                                                                                                                                                                                    
             if [ -f /usr/lib/aarch64-linux-gnu/liblapack.a ]; then                                                                                                                  
               ln -sfn /usr/lib/aarch64-linux-gnu/liblapack.a "${KALDI_ROOT}/tools/OpenBLAS/install/lib/liblapack.a"                                                                 
+            else                                                                                                                                                                    
+              ln -sfn "${OPENBLAS_ROOT}/lib/libopenblas.a" "${KALDI_ROOT}/tools/OpenBLAS/install/lib/liblapack.a"                                                                   
             fi                                                                                                                                                                      
             if [ -f /usr/lib/aarch64-linux-gnu/liblapacke.a ]; then                                                                                                                 
               ln -sfn /usr/lib/aarch64-linux-gnu/liblapacke.a "${KALDI_ROOT}/tools/OpenBLAS/install/lib/liblapacke.a"                                                               
+            else                                                                                                                                                                    
+              ln -sfn "${OPENBLAS_ROOT}/lib/libopenblas.a" "${KALDI_ROOT}/tools/OpenBLAS/install/lib/liblapacke.a"                                                                  
             fi                                                                                                                                                                      
                                                                                                                                                                                     
             cd "${KALDI_DIR}/tools"                                                                                                                                                 
@@ -101,4 +107,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts            
+            path: artifacts       
