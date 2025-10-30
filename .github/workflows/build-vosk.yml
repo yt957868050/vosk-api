@@ -56,6 +56,7 @@
                                                                                                                                                                                     
             git clone --depth 1 https://github.com/alphacep/kaldi.git "${KALDI_DIR}"                                                                                                
             export KALDI_ROOT="${KALDI_DIR}"                                                                                                                                        
+                                                                                                                                                                                    
             mkdir -p "${KALDI_ROOT}/tools/OpenBLAS"                                                                                                                                 
             ln -sfn "${OPENBLAS_ROOT}" "${KALDI_ROOT}/tools/OpenBLAS/install"                                                                                                       
                                                                                                                                                                                     
@@ -72,6 +73,7 @@
             fi                                                                                                                                                                      
                                                                                                                                                                                     
             ln -sfn "${OPENBLAS_ROOT}/lib/libopenblas.a" "${KALDI_ROOT}/tools/OpenBLAS/install/lib/libblas.a"                                                                       
+            ln -sfn "${OPENBLAS_ROOT}/lib/libopenblas.a" "${KALDI_ROOT}/tools/OpenBLAS/install/lib/libf2c.a"                                                                        
                                                                                                                                                                                     
             cd "${KALDI_DIR}/tools"                                                                                                                                                 
             extras/check_dependencies.sh || true                                                                                                                                    
@@ -110,4 +112,5 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts       
+            path: artifacts                                                                                                                                                         
+                                
