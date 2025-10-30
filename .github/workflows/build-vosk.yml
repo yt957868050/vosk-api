@@ -56,7 +56,6 @@
                                                                                                                                                                                     
             git clone --depth 1 https://github.com/alphacep/kaldi.git "${KALDI_DIR}"                                                                                                
             export KALDI_ROOT="${KALDI_DIR}"                                                                                                                                        
-                                                                                                                                                                                    
             mkdir -p "${KALDI_ROOT}/tools/OpenBLAS"                                                                                                                                 
             ln -sfn "${OPENBLAS_ROOT}" "${KALDI_ROOT}/tools/OpenBLAS/install"                                                                                                       
                                                                                                                                                                                     
@@ -88,6 +87,7 @@
                                                                                                                                                                                     
             sed -i 's/#include "decoder\/decoder-wrappers.h"/&\n#include "lat\/word-align-lattice.h"/' src/recognizer.cc                                                            
             sed -i 's/        WordAlignLatticePartial(/        kaldi::WordAlignLattice(/' src/recognizer.cc                                                                         
+            sed -i 's|install/lib/liblapacke.a install/lib/libf2c.a|install/lib/liblapacke.a|g' src/Makefile                                                                        
                                                                                                                                                                                     
             export LD_LIBRARY_PATH="${KALDI_ROOT}/src/lib:${LD_LIBRARY_PATH:-}"                                                                                                     
             make -C src                                                                                                                                                             
@@ -110,4 +110,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts         
+            path: artifacts       
