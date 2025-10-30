@@ -33,7 +33,7 @@
                                                                                                                                                                                     
             git clone --depth 1 --branch v0.3.13 https://github.com/OpenMathLib/OpenBLAS.git "${BUILD_ROOT}/openblas-src"                                                           
             make -C "${BUILD_ROOT}/openblas-src" TARGET=ARMV8 BINARY=64 USE_OPENMP=1 NO_SHARED=1 CFLAGS="${COMMON_FLAGS}" FCFLAGS="${COMMON_FLAGS}" PREFIX="${OPENBLAS_ROOT}"       
-            make -C "${BUILD_ROOT}/openblas-src" PREFIX="${OPENBLAS_ROOT}" install                                                                                                  
+            make -C "${BUILD_ROOT}/openblas-src" TARGET=ARMV8 BINARY=64 USE_OPENMP=1 NO_SHARED=1 PREFIX="${OPENBLAS_ROOT}" install                                                  
             pushd "${OPENBLAS_ROOT}/lib"                                                                                                                                            
             ln -sf libopenblas.a liblapack.a                                                                                                                                        
             ln -sf libopenblas.a liblapacke.a                                                                                                                                       
@@ -92,4 +92,4 @@
             name: vosk-arm64-libs                                                                                                                                                   
             path: |                                                                                                                                                                 
               ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz                                                                                                                 
-              ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz.sha256   
+              ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz.sha256                                                                                                          
