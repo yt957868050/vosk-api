@@ -1,9 +1,9 @@
-  name: Build Vosk ARM64                                                                                                                                                            
+name: Build Vosk ARM64                                                                                                                                                            
                                                                                                                                                                                     
-  on:                                                                                                                                                                               
+on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-  jobs:                                                                                                                                                                             
+jobs:                                                                                                                                                                             
     build-arm64:                                                                                                                                                                    
       runs-on: ubuntu-22.04-arm                                                                                                                                                     
       timeout-minutes: 180                                                                                                                                                          
@@ -57,8 +57,7 @@
                                                                                                                                                                                     
             pushd "${KALDI_ROOT}/src"                                                                                                                                               
             CXXFLAGS="${CXXFLAGS}" CFLAGS="${CFLAGS}" ./configure --shared --static --use-cuda=no --openblas-root="${OPENBLAS_ROOT}"                                                
-            make depend -j"$(nproc)"                                                                                                                                                
-            make -j"$(nproc)" SKIP_KALDI_TESTS=1                                                                                                                                    
+            make kaldi-lib -j"$(nproc)" SKIP_KALDI_TESTS=1                                                                                                                          
             popd                                                                                                                                                                    
                                                                                                                                                                                     
             git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git "${VOSK_ROOT}"                                                                            
