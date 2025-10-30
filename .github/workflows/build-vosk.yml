@@ -65,11 +65,14 @@
             else                                                                                                                                                                    
               ln -sfn "${OPENBLAS_ROOT}/lib/libopenblas.a" "${KALDI_ROOT}/tools/OpenBLAS/install/lib/liblapack.a"                                                                   
             fi                                                                                                                                                                      
+                                                                                                                                                                                    
             if [ -f /usr/lib/aarch64-linux-gnu/liblapacke.a ]; then                                                                                                                 
               ln -sfn /usr/lib/aarch64-linux-gnu/liblapacke.a "${KALDI_ROOT}/tools/OpenBLAS/install/lib/liblapacke.a"                                                               
             else                                                                                                                                                                    
               ln -sfn "${OPENBLAS_ROOT}/lib/libopenblas.a" "${KALDI_ROOT}/tools/OpenBLAS/install/lib/liblapacke.a"                                                                  
             fi                                                                                                                                                                      
+                                                                                                                                                                                    
+            ln -sfn "${OPENBLAS_ROOT}/lib/libopenblas.a" "${KALDI_ROOT}/tools/OpenBLAS/install/lib/libblas.a"                                                                       
                                                                                                                                                                                     
             cd "${KALDI_DIR}/tools"                                                                                                                                                 
             extras/check_dependencies.sh || true                                                                                                                                    
@@ -107,4 +110,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-jni                                                                                                                                                    
-            path: artifacts       
+            path: artifacts         
