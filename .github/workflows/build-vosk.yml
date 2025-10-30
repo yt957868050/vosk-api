@@ -1,9 +1,9 @@
-name: Build Vosk ARM64                                                                                                                                                            
+  name: Build Vosk ARM64                                                                                                                                                            
                                                                                                                                                                                     
-on:                                                                                                                                                                               
+  on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-jobs:                                                                                                                                                                             
+  jobs:                                                                                                                                                                             
     build-arm64:                                                                                                                                                                    
       runs-on: ubuntu-22.04-arm                                                                                                                                                     
       timeout-minutes: 180                                                                                                                                                          
@@ -31,12 +31,8 @@ jobs:
             VOSK_ROOT="${BUILD_ROOT}/vosk-api"                                                                                                                                      
             mkdir -p "${OPENBLAS_ROOT}"                                                                                                                                             
                                                                                                                                                                                     
-            # 1. OpenBLAS（静态、含 LAPACK/LAPACKE）                                                                                                                                
             git clone --depth 1 --branch v0.3.13 https://github.com/OpenMathLib/OpenBLAS.git "${BUILD_ROOT}/openblas-src"                                                           
-            make -C "${BUILD_ROOT}/openblas-src" \                                                                                                                                  
-              TARGET=ARMV8 BINARY=64 USE_OPENMP=1 NO_SHARED=1 \                                                                                                                     
-              CFLAGS="${COMMON_FLAGS}" FCFLAGS="${COMMON_FLAGS}" \                                                                                                                  
-              PREFIX="${OPENBLAS_ROOT}"                                                                                                                                             
+            make -C "${BUILD_ROOT}/openblas-src" TARGET=ARMV8 BINARY=64 USE_OPENMP=1 NO_SHARED=1 CFLAGS="${COMMON_FLAGS}" FCFLAGS="${COMMON_FLAGS}" PREFIX="${OPENBLAS_ROOT}"       
             make -C "${BUILD_ROOT}/openblas-src" PREFIX="${OPENBLAS_ROOT}" install                                                                                                  
             pushd "${OPENBLAS_ROOT}/lib"                                                                                                                                            
             ln -sf libopenblas.a liblapack.a                                                                                                                                        
@@ -45,7 +41,6 @@ jobs:
             ln -sf libopenblas.a libf2c.a                                                                                                                                           
             popd                                                                                                                                                                    
                                                                                                                                                                                     
-            # 2. Kaldi（全部模块 -fPIC）                                                                                                                                            
             git clone --depth 1 https://github.com/alphacep/kaldi.git "${KALDI_ROOT}"                                                                                               
             export CXXFLAGS="${COMMON_FLAGS} -std=c++14"                                                                                                                            
             export CFLAGS="${COMMON_FLAGS}"                                                                                                                                         
@@ -59,13 +54,11 @@ jobs:
                                                                                                                                                                                     
             pushd "${KALDI_ROOT}/src"                                                                                                                                               
             make clean                                                                                                                                                              
-            CXXFLAGS="${CXXFLAGS}" CFLAGS="${CFLAGS}" \                                                                                                                             
-              ./configure --shared --static --use-cuda=no --openblas-root="${OPENBLAS_ROOT}"                                                                                        
+            CXXFLAGS="${CXXFLAGS}" CFLAGS="${CFLAGS}" ./configure --shared --static --use-cuda=no --openblas-root="${OPENBLAS_ROOT}"                                                
             make depend -j"$(nproc)"                                                                                                                                                
             make -j"$(nproc)"                                                                                                                                                       
             popd                                                                                                                                                                    
                                                                                                                                                                                     
-            # 3. Vosk                                                                                                                                                               
             git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git "${VOSK_ROOT}"                                                                            
             mkdir -p "${KALDI_ROOT}/tools/OpenBLAS"                                                                                                                                 
             rsync -a "${OPENBLAS_ROOT}/" "${KALDI_ROOT}/tools/OpenBLAS/install/"                                                                                                    
@@ -83,7 +76,6 @@ jobs:
             make -C java -j"$(nproc)"                                                                                                                                               
             popd                                                                                                                                                                    
                                                                                                                                                                                     
-            # 4. 打包                                                                                                                                                               
             ARTIFACT_DIR="${BUILD_ROOT}/artifacts"                                                                                                                                  
             mkdir -p "${ARTIFACT_DIR}"                                                                                                                                              
             cp "${VOSK_ROOT}/src/libvosk.so" "${ARTIFACT_DIR}/"                                                                                                                     
@@ -91,8 +83,7 @@ jobs:
             cp "${VOSK_ROOT}/java/lib/linux-aarch64/vosk.jar" "${ARTIFACT_DIR}/"                                                                                                    
             cp "${VOSK_ROOT}/src/vosk_api.h" "${ARTIFACT_DIR}/"                                                                                                                     
             cp "${VOSK_ROOT}/src/model.h" "${ARTIFACT_DIR}/"                                                                                                                        
-            tar -C "${ARTIFACT_DIR}" -czf "${BUILD_ROOT}/vosk-linux-arm64.tar.gz" \                                                                                                 
-              libvosk.so libvosk_jni.so vosk.jar vosk_api.h model.h                                                                                                                 
+            tar -C "${ARTIFACT_DIR}" -czf "${BUILD_ROOT}/vosk-linux-arm64.tar.gz" libvosk.so libvosk_jni.so vosk.jar vosk_api.h model.h                                             
             sha256sum "${BUILD_ROOT}/vosk-linux-arm64.tar.gz" > "${BUILD_ROOT}/vosk-linux-arm64.tar.gz.sha256"                                                                      
                                                                                                                                                                                     
         - name: Upload artifacts                                                                                                                                                    
@@ -101,4 +92,4 @@ jobs:
             name: vosk-arm64-libs                                                                                                                                                   
             path: |                                                                                                                                                                 
               ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz                                                                                                                 
-              ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz.sha256     
+              ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz.sha256   
