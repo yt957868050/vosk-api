@@ -55,7 +55,6 @@
               CFLAGS="${COMMON_FLAGS}" FCFLAGS="${COMMON_FLAGS}" \                                                                                                                  
               PREFIX="${OPENBLAS_ROOT}"                                                                                                                                             
             make -C "${BUILD_ROOT}/openblas-src" PREFIX="${OPENBLAS_ROOT}" install                                                                                                  
-            # Kaldi/Vosk 期望看到 lapack/lapacke/blas/f2c；用 openblas 静态库做占位                                                                                                 
             pushd "${OPENBLAS_ROOT}/lib"                                                                                                                                            
             ln -sf libopenblas.a liblapack.a                                                                                                                                        
             ln -sf libopenblas.a liblapacke.a                                                                                                                                       
@@ -86,7 +85,6 @@
             # 3. Vosk                                                                                                                                                               
             git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git "${VOSK_ROOT}"                                                                            
                                                                                                                                                                                     
-            # Kaldi 工具目录下也准备 OpenBLAS（Vosk Makefile 默认找这里）                                                                                                           
             mkdir -p "${KALDI_ROOT}/tools/OpenBLAS"                                                                                                                                 
             rsync -a "${OPENBLAS_ROOT}/" "${KALDI_ROOT}/tools/OpenBLAS/install/"                                                                                                    
                                                                                                                                                                                     
@@ -121,4 +119,4 @@
             name: vosk-arm64-libs                                                                                                                                                   
             path: |                                                                                                                                                                 
               ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz                                                                                                                 
-              ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz.sha256  
+              ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz.sha256 
