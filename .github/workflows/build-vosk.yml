@@ -72,7 +72,7 @@
             cd "${VOSK_DIR}"                                                                                                                                                        
                                                                                                                                                                                     
             sed -i 's/#include "decoder\/decoder-wrappers.h"/&\n#include "lat\/word-align-lattice.h"/' src/recognizer.cc                                                            
-            sed -i 's/        WordAlignLatticePartial(/        kaldi::WordAlignLattice(/' src/recognizer.cc)                                                                        
+            sed -i 's/        WordAlignLatticePartial(/        kaldi::WordAlignLattice(/' src/recognizer.cc                                                                     
                                                                                                                                                                                     
             export LD_LIBRARY_PATH="${KALDI_ROOT}/src/lib:${LD_LIBRARY_PATH:-}"                                                                                                     
             make -C src                                                                                                                                                             
