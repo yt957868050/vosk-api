@@ -94,4 +94,4 @@ jobs:
             name: vosk-arm64-libs                                                                                                                                                   
             path: |                                                                                                                                                                 
               ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz                                                                                                                 
-              ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz.sha256  
+              ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz.sha256 
