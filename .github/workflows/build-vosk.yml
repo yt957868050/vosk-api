@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-22.04-arm
 
     env:
-      BUILD_ROOT: $RUNNER_TEMP/vosk-build
+      BUILD_ROOT: ${{ env.RUNNER_TEMP }}/vosk-build
 
     steps:
       - name: Checkout repository
