@@ -78,8 +78,7 @@
             extras/check_dependencies.sh || true                                                                                                                                    
             make OPENFST_CONFIGURE="--enable-static --enable-shared --with-pic --enable-ngram-fsts" -j"$(nproc)"                                                                    
             cd ../src                                                                                                                                                               
-            CXXFLAGS="-fPIC -O2 -march=armv8-a -std=c++14" CFLAGS="-fPIC -O2 -march=armv8-a" \                                                                                      
-              ./configure --shared --static --use-cuda=no --openblas-root="$OPENBLAS_ROOT"                                                                                          
+            CXXFLAGS="-fPIC -O2 -march=armv8-a -std=c++14" CFLAGS="-fPIC -O2 -march=armv8-a" ./configure --shared --static --use-cuda=no --openblas-root="$OPENBLAS_ROOT"           
             make clean                                                                                                                                                              
             make -j"$(nproc)" \                                                                                                                                                     
               kaldi-online2 kaldi-decoder kaldi-ivector kaldi-gmm kaldi-tree \                                                                                                      
@@ -116,4 +115,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-libs                                                                                                                                                   
-            path: ${{ env.BUILD_ROOT }}/artifacts    
+            path: ${{ env.BUILD_ROOT }}/artifacts 
