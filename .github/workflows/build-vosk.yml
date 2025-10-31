@@ -18,7 +18,7 @@ jobs:
             sudo apt-get update                                                                                                                                                     
             sudo apt-get install -y --no-install-recommends build-essential gfortran git wget curl unzip zip cmake pkg-config python3 python3-dev python3-distutils python2 autoconf automake libtool swig zlib1g-dev sox                                                                                                                                              
                                                                                                                                                                                     
-        - name: Build OpenBLAS, Kaldi (with -fPIC) and Vosk                                                                                                                         
+        - name: Build OpenBLAS, Kaldi (libs only, -fPIC) and Vosk                                                                                                                   
           env:                                                                                                                                                                      
             BUILD_ROOT: ${{ runner.temp }}/vosk-build                                                                                                                               
             COMMON_FLAGS: "-fPIC -O2 -march=armv8-a"                                                                                                                                
@@ -58,7 +58,9 @@ jobs:
             pushd "${KALDI_ROOT}/src"                                                                                                                                               
             CXXFLAGS="${CXXFLAGS}" CFLAGS="${CFLAGS}" ./configure --shared --static --use-cuda=no --openblas-root="${OPENBLAS_ROOT}"                                                
             make depend -j"$(nproc)"                                                                                                                                                
-            make -j"$(nproc)" SKIP_KALDI_TESTS=1 TESTFILES=                                                                                                                         
+            for dir in base matrix util tree gmm transform feat lat lm fstext hmm decoder cudamatrix ivector online2 nnet2 nnet3 chain rnnlm sgmm2; do                              
+              make -C "$dir" -j"$(nproc)"                                                                                                                                           
+            done                                                                                                                                                                    
             popd                                                                                                                                                                    
                                                                                                                                                                                     
             git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git "${VOSK_ROOT}"                                                                            
