@@ -98,13 +98,14 @@ jobs:
 
           mkdir -p "$VOSK_SRC/java/src/main/jni" "$VOSK_SRC/java/src/main/swig"
           cat <<'SWIG' > "$VOSK_SRC/java/src/main/jni/vosk.i"
-%module vosk
-%{
-#include "vosk_api.h"
-%}
+            %module vosk
+            %{
+            #include "vosk_api.h"
+            %}
 
-%include "vosk_api.h"
+            %include "vosk_api.h"
 SWIG
+          sed -i 's/^ *//' "$VOSK_SRC/java/src/main/jni/vosk.i"
 
           swig -java -c++ -package org.vosk -outdir "$VOSK_SRC/java/src/main/swig" \
             -o "$VOSK_SRC/java/src/main/jni/vosk_wrap.cxx" "$VOSK_SRC/java/src/main/jni/vosk.i"
