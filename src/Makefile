@@ -70,14 +70,12 @@ endif
 
 ifeq ($(HAVE_OPENBLAS_CLAPACK), 1)
     CFLAGS += -I$(OPENBLAS_ROOT)/include
+    LDFLAGS += -L$(OPENBLAS_ROOT)/lib
     ifeq ($(USE_SHARED), 0)
         LIBS += \
-            $(OPENBLAS_ROOT)/lib/libopenblas.a \
-            $(OPENBLAS_ROOT)/lib/liblapack.a \
-            $(OPENBLAS_ROOT)/lib/libblas.a \
-            $(OPENBLAS_ROOT)/lib/libf2c.a
+            $(OPENBLAS_ROOT)/lib/libopenblas.a
     else
-        LDFLAGS += -lopenblas -llapack -lblas -lf2c
+        LDFLAGS += -lopenblas
     endif
 endif
 

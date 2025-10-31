@@ -91,7 +91,6 @@ jobs:
 
           sed -i 's|#include "decoder/decoder-wrappers.h"|#include "decoder/decoder-wrappers.h"\n#include "lat/word-align-lattice.h"|' "$VOSK_SRC/src/recognizer.cc"
           sed -i 's/WordAlignLatticePartial(/kaldi::WordAlignLattice(/g' "$VOSK_SRC/src/recognizer.cc"
-          sed -i 's|install/lib/liblapacke.a install/lib/libf2c.a|install/lib/liblapacke.a|' "$VOSK_SRC/src/Makefile"
 
           mkdir -p "$KALDI_ROOT/tools/OpenBLAS/install"
           rsync -a "$OPENBLAS_INSTALL/" "$KALDI_ROOT/tools/OpenBLAS/install/"
