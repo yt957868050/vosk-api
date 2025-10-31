@@ -33,26 +33,18 @@
             DEBIAN_FRONTEND: noninteractive                                                                                                                                         
           run: |                                                                                                                                                                    
             sudo apt-get update -y                                                                                                                                                  
-            sudo apt-get install -y --no-install-recommends \                                                                                                                       
-              git build-essential gfortran \                                                                                                                                        
-              cmake unzip autoconf automake libtool sox \                                                                                                                           
-              python2 python3 python-is-python3 \                                                                                                                                   
-              swig wget curl libz-dev \                                                                                                                                             
-              openjdk-17-jdk-headless                                                                                                                                               
+            sudo apt-get install -y --no-install-recommends git build-essential gfortran cmake unzip autoconf automake libtool sox python2 python3 python-is-python3 swig wget curl libz-dev openjdk-17-jdk-headless                                                                                                                                                  
                                                                                                                                                                                     
         - name: Build OpenBLAS (armv8, no OpenMP)                                                                                                                                   
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
             mkdir -p "${BUILD_ROOT}"                                                                                                                                                
             if [ ! -d "${BUILD_ROOT}/openblas" ]; then                                                                                                                              
-              git clone --depth 1 --branch "${OPENBLAS_TAG}" \                                                                                                                      
-                https://github.com/OpenMathLib/OpenBLAS.git \                                                                                                                       
-                "${BUILD_ROOT}/openblas"                                                                                                                                            
+              git clone --depth 1 --branch "${OPENBLAS_TAG}" https://github.com/OpenMathLib/OpenBLAS.git "${BUILD_ROOT}/openblas"                                                   
             fi                                                                                                                                                                      
             pushd "${BUILD_ROOT}/openblas"                                                                                                                                          
             make clean || true                                                                                                                                                      
-            make -j"$(nproc)" TARGET=ARMV8 USE_OPENMP=0 BINARY=64 \                                                                                                                 
-                 NO_SHARED=0 NO_STATIC=0 NUM_THREADS=1                                                                                                                              
+            make -j"$(nproc)" TARGET=ARMV8 USE_OPENMP=0 BINARY=64 NO_SHARED=0 NO_STATIC=0 NUM_THREADS=1                                                                             
             make PREFIX="${BUILD_ROOT}/openblas-install" install                                                                                                                    
             popd                                                                                                                                                                    
                                                                                                                                                                                     
@@ -68,22 +60,18 @@
                                                                                                                                                                                     
             pushd "${KALDI_ROOT}/tools"                                                                                                                                             
             extras/check_dependencies.sh || true                                                                                                                                    
-            make -j"$(nproc)" \                                                                                                                                                     
-              OPENFST_CONFIGURE="--enable-static --enable-shared --with-pic --enable-ngram-fsts"                                                                                    
+            make -j"$(nproc)" OPENFST_CONFIGURE="--enable-static --enable-shared --with-pic --enable-ngram-fsts"                                                                    
             popd                                                                                                                                                                    
                                                                                                                                                                                     
             pushd "${KALDI_ROOT}/src"                                                                                                                                               
             CFLAGS="-fPIC -O2 -march=armv8-a" \                                                                                                                                     
             CXXFLAGS="-fPIC -O2 -march=armv8-a -std=c++14" \                                                                                                                        
             LDFLAGS="-L${OPENBLAS_PREFIX}/lib" \                                                                                                                                    
-              ./configure --openblas-root="${OPENBLAS_PREFIX}" \                                                                                                                    
-                          --static --shared --use-cuda=no                                                                                                                           
+              ./configure --openblas-root="${OPENBLAS_PREFIX}" --static --shared --use-cuda=no                                                                                      
                                                                                                                                                                                     
             make clean                                                                                                                                                              
             make depend -j"$(nproc)"                                                                                                                                                
-            make -j"$(nproc)" \                                                                                                                                                     
-              base matrix util feat tree gmm lat lm fstext hmm transform \                                                                                                          
-              cudamatrix online2 ivector rnnlm nnet3                                                                                                                                
+            make -j"$(nproc)" base matrix util feat tree gmm lat lm fstext hmm transform cudamatrix online2 ivector rnnlm nnet3                                                     
             popd                                                                                                                                                                    
                                                                                                                                                                                     
         - name: Build Vosk core & JNI                                                                                                                                               
@@ -92,14 +80,13 @@
             export PATH="${JAVA_HOME}/bin:${PATH}"                                                                                                                                  
             export OPENBLAS_PREFIX="${BUILD_ROOT}/openblas-install"                                                                                                                 
             export KALDI_ROOT="${BUILD_ROOT}/kaldi"                                                                                                                                 
-            export VOSK_ROOT="${BUILD_ROOT}/vosk-api"                                                                                                                               
+            export VOSK_ROOT="${BUILD_ROOT}/vosk-api}"                                                                                                                              
             export ARTIFACT_DIR="${BUILD_ROOT}/artifacts"                                                                                                                           
                                                                                                                                                                                     
             mkdir -p "${ARTIFACT_DIR}/include"                                                                                                                                      
                                                                                                                                                                                     
             if [ ! -d "${VOSK_ROOT}" ]; then                                                                                                                                        
-              git clone --depth 1 --branch "${VOSK_TAG}" \                                                                                                                          
-                https://github.com/alphacep/vosk-api.git "${VOSK_ROOT}"                                                                                                             
+              git clone --depth 1 --branch "${VOSK_TAG}" https://github.com/alphacep/vosk-api.git "${VOSK_ROOT}"                                                                    
             fi                                                                                                                                                                      
                                                                                                                                                                                     
             pushd "${VOSK_ROOT}"                                                                                                                                                    
@@ -144,4 +131,4 @@
               ${{ env.BUILD_ROOT }}/artifacts/libvosk.so                                                                                                                            
               ${{ env.BUILD_ROOT }}/artifacts/libvosk_jni.so                                                                                                                        
               ${{ env.BUILD_ROOT }}/artifacts/include                                                                                                                               
-              ${{ env.BUILD_ROOT }}/vosk-arm64-libs.tar.gz 
+              ${{ env.BUILD_ROOT }}/vosk-arm64-libs.tar.gz  
