@@ -10,7 +10,7 @@
       steps:                                                                                                                                                                        
         - uses: actions/checkout@v4                                                                                                                                                 
                                                                                                                                                                                     
-        - name: Define build paths                                                                                                                                                  
+        - name: Prepare path variables                                                                                                                                              
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
             BUILD_ROOT="$RUNNER_TEMP/vosk-build"                                                                                                                                    
@@ -48,12 +48,11 @@
             )                                                                                                                                                                       
             sudo apt-get install -y --no-install-recommends "${packages[@]}"                                                                                                        
                                                                                                                                                                                     
-        - name: Prepare build directories                                                                                                                                           
+        - name: Create build directories                                                                                                                                            
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
             rm -rf "$BUILD_ROOT"                                                                                                                                                    
-            mkdir -p "$BUILD_ROOT"                                                                                                                                                  
-            mkdir -p "$OPENBLAS_ROOT"                                                                                                                                               
+            mkdir -p "$BUILD_ROOT" "$OPENBLAS_ROOT"                                                                                                                                 
                                                                                                                                                                                     
         - name: Build OpenBLAS (static + shared, no OpenMP)                                                                                                                         
           run: |                                                                                                                                                                    
@@ -69,7 +68,7 @@
               ln -sf libopenblas.so "lib${name}.so"                                                                                                                                 
             done                                                                                                                                                                    
                                                                                                                                                                                     
-        - name: Build Kaldi core libraries                                                                                                                                          
+        - name: Build Kaldi libraries                                                                                                                                               
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
             cd "$BUILD_ROOT"                                                                                                                                                        
@@ -80,10 +79,7 @@
             cd ../src                                                                                                                                                               
             CXXFLAGS="-fPIC -O2 -march=armv8-a -std=c++14" CFLAGS="-fPIC -O2 -march=armv8-a" ./configure --shared --static --use-cuda=no --openblas-root="$OPENBLAS_ROOT"           
             make clean                                                                                                                                                              
-            make -j"$(nproc)" \                                                                                                                                                     
-              kaldi-online2 kaldi-decoder kaldi-ivector kaldi-gmm kaldi-tree \                                                                                                      
-              kaldi-feat kaldi-lat kaldi-lm kaldi-rnnlm kaldi-hmm kaldi-nnet3 \                                                                                                     
-              kaldi-transform kaldi-cudamatrix kaldi-matrix kaldi-fstext kaldi-util kaldi-base                                                                                      
+            make -j"$(nproc)" kaldi-online2 kaldi-decoder kaldi-ivector kaldi-gmm kaldi-tree kaldi-feat kaldi-lat kaldi-lm kaldi-rnnlm kaldi-hmm kaldi-nnet3 kaldi-transform kaldi-cudamatrix kaldi-matrix kaldi-fstext kaldi-util kaldi-base                                                                                                                        
                                                                                                                                                                                     
         - name: Build Vosk libraries                                                                                                                                                
           run: |                                                                                                                                                                    
@@ -115,4 +111,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-libs                                                                                                                                                   
-            path: ${{ env.BUILD_ROOT }}/artifacts 
+            path: ${{ env.BUILD_ROOT }}/artifacts
