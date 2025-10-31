@@ -11,7 +11,6 @@
         - uses: actions/checkout@v4                                                                                                                                                 
                                                                                                                                                                                     
         - name: Define build paths                                                                                                                                                  
-          id: paths                                                                                                                                                                 
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
             BUILD_DIR="$RUNNER_TEMP/vosk-build"                                                                                                                                     
@@ -115,4 +114,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-libs                                                                                                                                                   
-            path: ${{ env.BUILD_DIR }}/artifacts 
+            path: ${{ env.BUILD_DIR }}/artifacts   
