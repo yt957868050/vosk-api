@@ -140,11 +140,11 @@
             tar -C "${BUILD_ROOT}/artifacts" -czf "${BUILD_ROOT}/vosk-arm64-libs.tar.gz" .                                                                                          
                                                                                                                                                                                     
         - name: Upload libvosk artifacts                                                                                                                                            
-          uses: actions/upload-artifact@v3                                                                                                                                          
+          uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-libs                                                                                                                                                   
             path: |                                                                                                                                                                 
               ${{ env.BUILD_ROOT }}/artifacts/libvosk.so                                                                                                                            
               ${{ env.BUILD_ROOT }}/artifacts/libvosk_jni.so                                                                                                                        
               ${{ env.BUILD_ROOT }}/artifacts/include                                                                                                                               
-              ${{ env.BUILD_ROOT }}/vosk-arm64-libs.tar.gz 
+              ${{ env.BUILD_ROOT }}/vosk-arm64-libs.tar.gz    
