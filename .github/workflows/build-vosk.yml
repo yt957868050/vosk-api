@@ -1,9 +1,9 @@
-name: Build Vosk ARM64                                                                                                                                                            
+  name: Build Vosk ARM64                                                                                                                                                            
                                                                                                                                                                                     
-on:                                                                                                                                                                               
+  on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-jobs:                                                                                                                                                                             
+  jobs:                                                                                                                                                                             
     build:                                                                                                                                                                          
       runs-on: ubuntu-22.04-arm                                                                                                                                                     
                                                                                                                                                                                     
@@ -38,7 +38,7 @@ jobs:
               python3-dev                                                                                                                                                           
               python3-distutils                                                                                                                                                     
               python3-pip                                                                                                                                                           
-              python2          # Kaldi extras/check_dependencies.sh 需要 python2                                                                                                    
+              python2                                                                                                                                                               
               sox                                                                                                                                                                   
               wget                                                                                                                                                                  
               zlib1g-dev                                                                                                                                                            
@@ -78,8 +78,7 @@ jobs:
             extras/check_dependencies.sh || true                                                                                                                                    
             make OPENFST_CONFIGURE="--enable-static --enable-shared --with-pic --enable-ngram-fsts" -j"$(nproc)"                                                                    
             cd ../src                                                                                                                                                               
-            CXXFLAGS="-fPIC -O2 -march=armv8-a -std=c++14" \                                                                                                                        
-            CFLAGS="-fPIC -O2 -march=armv8-a" \                                                                                                                                     
+            CXXFLAGS="-fPIC -O2 -march=armv8-a -std=c++14" CFLAGS="-fPIC -O2 -march=armv8-a" \                                                                                      
               ./configure --shared --static --use-cuda=no --openblas-root="$OPENBLAS_ROOT"                                                                                          
             make clean                                                                                                                                                              
             make -j"$(nproc)" \                                                                                                                                                     
@@ -105,8 +104,7 @@ jobs:
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
             ART_DIR="$BUILD_ROOT/artifacts"                                                                                                                                         
-            mkdir -p "$ART_DIR/lib"                                                                                                                                                 
-            mkdir -p "$ART_DIR/include"                                                                                                                                             
+            mkdir -p "$ART_DIR/lib" "$ART_DIR/include"                                                                                                                              
             cp "$VOSK_ROOT/src/libvosk.so" "$ART_DIR/lib/"                                                                                                                          
             if [ -f "$VOSK_ROOT/src/libvosk_jni.so" ]; then                                                                                                                         
               cp "$VOSK_ROOT/src/libvosk_jni.so" "$ART_DIR/lib/"                                                                                                                    
@@ -118,4 +116,4 @@ jobs:
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-libs                                                                                                                                                   
-            path: ${{ env.BUILD_ROOT }}/artifacts        
+            path: ${{ env.BUILD_ROOT }}/artifacts    
