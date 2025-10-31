@@ -79,7 +79,7 @@
             cd ../src                                                                                                                                                               
             CXXFLAGS="-fPIC -O2 -march=armv8-a -std=c++14" CFLAGS="-fPIC -O2 -march=armv8-a" ./configure --shared --static --use-cuda=no --openblas-root="$OPENBLAS_ROOT"           
             make clean                                                                                                                                                              
-            make -j"$(nproc)" kaldi-online2 kaldi-decoder kaldi-ivector kaldi-gmm kaldi-tree kaldi-feat kaldi-lat kaldi-lm kaldi-rnnlm kaldi-hmm kaldi-nnet3 kaldi-transform kaldi-cudamatrix kaldi-matrix kaldi-fstext kaldi-util kaldi-base                                                                                                                        
+            make -j"$(nproc)"                                                                                                                                                       
                                                                                                                                                                                     
         - name: Build Vosk libraries                                                                                                                                                
           run: |                                                                                                                                                                    
