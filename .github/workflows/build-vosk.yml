@@ -1,14 +1,15 @@
-name: Build Vosk ARM64                                                                                                                                                            
+  name: Build Vosk ARM64                                                                                                                                                            
                                                                                                                                                                                     
-on:                                                                                                                                                                               
+  on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-env:                                                                                                                                                                               
-    BUILD_ROOT: ${{ runner.temp }}/vosk-build                                                                                                                                       
-                                                                                                                                                                                    
-jobs:                                                                                                                                                                             
+  jobs:                                                                                                                                                                             
     build:                                                                                                                                                                          
       runs-on: ubuntu-22.04-arm                                                                                                                                                     
+                                                                                                                                                                                    
+      env:                                                                                                                                                                          
+        BUILD_ROOT: $RUNNER_TEMP/vosk-build                                                                                                                                         
+                                                                                                                                                                                    
       steps:                                                                                                                                                                        
         - name: Checkout Vosk workflow repo                                                                                                                                         
           uses: actions/checkout@v4                                                                                                                                                 
@@ -25,24 +26,19 @@ jobs:
         - name: Build OpenBLAS (ARM64)                                                                                                                                              
           run: |                                                                                                                                                                    
             set -euxo pipefail                                                                                                                                                      
-            BUILD_ROOT="${BUILD_ROOT}"                                                                                                                                              
             OPENBLAS_SRC="$BUILD_ROOT/openblas-src"                                                                                                                                 
             OPENBLAS_INSTALL="$BUILD_ROOT/openblas-install"                                                                                                                         
                                                                                                                                                                                     
             mkdir -p "$BUILD_ROOT"                                                                                                                                                  
             git clone --depth 1 --branch v0.3.13 https://github.com/OpenMathLib/OpenBLAS.git "$OPENBLAS_SRC"                                                                        
                                                                                                                                                                                     
-            make -C "$OPENBLAS_SRC" \                                                                                                                                               
-              TARGET=ARMV8 USE_OPENMP=0 DYNAMIC_ARCH=0 \                                                                                                                            
-              NO_SHARED=0 NO_STATIC=0 BINARY=64 \                                                                                                                                   
-              -j"$(nproc)"                                                                                                                                                          
-                                                                                                                                                                                    
+            make -C "$OPENBLAS_SRC" TARGET=ARMV8 USE_OPENMP=0 DYNAMIC_ARCH=0 \                                                                                                      
+              NO_SHARED=0 NO_STATIC=0 BINARY=64 -j"$(nproc)"                                                                                                                        
             make -C "$OPENBLAS_SRC" PREFIX="$OPENBLAS_INSTALL" install                                                                                                              
                                                                                                                                                                                     
         - name: Clone and build Kaldi (libraries only)                                                                                                                              
           run: |                                                                                                                                                                    
             set -euxo pipefail                                                                                                                                                      
-            BUILD_ROOT="${BUILD_ROOT}"                                                                                                                                              
             OPENBLAS_INSTALL="$BUILD_ROOT/openblas-install"                                                                                                                         
             KALDI_ROOT="$BUILD_ROOT/kaldi"                                                                                                                                          
                                                                                                                                                                                     
@@ -67,7 +63,6 @@ jobs:
         - name: Build Vosk native libraries                                                                                                                                         
           run: |                                                                                                                                                                    
             set -euxo pipefail                                                                                                                                                      
-            BUILD_ROOT="${BUILD_ROOT}"                                                                                                                                              
             KALDI_ROOT="$BUILD_ROOT/kaldi"                                                                                                                                          
             OPENBLAS_INSTALL="$BUILD_ROOT/openblas-install"                                                                                                                         
             VOSK_SRC="$BUILD_ROOT/vosk-api"                                                                                                                                         
@@ -120,7 +115,7 @@ jobs:
         - name: Package artifacts                                                                                                                                                   
           run: |                                                                                                                                                                    
             set -euxo pipefail                                                                                                                                                      
-            tar -C "${BUILD_ROOT}/artifacts" -czf "${BUILD_ROOT}/vosk-arm64-libs.tar.gz" .                                                                                          
+            tar -C "$BUILD_ROOT/artifacts" -czf "$BUILD_ROOT/vosk-arm64-libs.tar.gz" .                                                                                              
                                                                                                                                                                                     
         - name: Upload libraries                                                                                                                                                    
           uses: actions/upload-artifact@v4                                                                                                                                          
