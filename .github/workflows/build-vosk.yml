@@ -1,9 +1,9 @@
-  name: Build Vosk ARM64                                                                                                                                                            
+name: Build Vosk ARM64                                                                                                                                                            
                                                                                                                                                                                     
-  on:                                                                                                                                                                               
+on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-  jobs:                                                                                                                                                                             
+jobs:                                                                                                                                                                             
     build:                                                                                                                                                                          
       runs-on: ubuntu-22.04-arm                                                                                                                                                     
                                                                                                                                                                                     
@@ -38,6 +38,7 @@
               python3-dev                                                                                                                                                           
               python3-distutils                                                                                                                                                     
               python3-pip                                                                                                                                                           
+              python2          # Kaldi extras/check_dependencies.sh 需要 python2                                                                                                    
               sox                                                                                                                                                                   
               wget                                                                                                                                                                  
               zlib1g-dev                                                                                                                                                            
@@ -117,4 +118,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-libs                                                                                                                                                   
-            path: ${{ env.BUILD_ROOT }}/artifacts   
+            path: ${{ env.BUILD_ROOT }}/artifacts        
