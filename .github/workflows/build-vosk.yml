@@ -16,7 +16,10 @@ jobs:
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
             sudo apt-get update                                                                                                                                                     
-            sudo apt-get install -y --no-install-recommends build-essential gfortran git wget curl unzip zip cmake pkg-config python3 python3-dev python3-distutils python2 autoconf automake libtool swig zlib1g-dev sox                                                                                                                                              
+            sudo apt-get install -y --no-install-recommends \                                                                                                                       
+              build-essential gfortran git wget curl unzip zip cmake pkg-config \                                                                                                   
+              python3 python3-dev python3-distutils python2 \                                                                                                                       
+              autoconf automake libtool swig zlib1g-dev sox                                                                                                                         
                                                                                                                                                                                     
         - name: Build OpenBLAS, Kaldi (with -fPIC) and Vosk                                                                                                                         
           env:                                                                                                                                                                      
@@ -31,8 +34,8 @@ jobs:
             VOSK_ROOT="${BUILD_ROOT}/vosk-api"                                                                                                                                      
                                                                                                                                                                                     
             git clone --depth 1 --branch v0.3.13 https://github.com/OpenMathLib/OpenBLAS.git "${BUILD_ROOT}/openblas-src"                                                           
-            make -C "${BUILD_ROOT}/openblas-src" TARGET=ARMV8 BINARY=64 USE_OPENMP=1 CFLAGS="${COMMON_FLAGS}" FCFLAGS="${COMMON_FLAGS}" PREFIX="${OPENBLAS_ROOT}"                   
-            make -C "${BUILD_ROOT}/openblas-src" TARGET=ARMV8 BINARY=64 USE_OPENMP=1 PREFIX="${OPENBLAS_ROOT}" install                                                              
+            make -C "${BUILD_ROOT}/openblas-src" TARGET=ARMV8 BINARY=64 USE_OPENMP=0 CFLAGS="${COMMON_FLAGS}" FCFLAGS="${COMMON_FLAGS}" PREFIX="${OPENBLAS_ROOT}"                   
+            make -C "${BUILD_ROOT}/openblas-src" TARGET=ARMV8 BINARY=64 USE_OPENMP=0 PREFIX="${OPENBLAS_ROOT}" install                                                              
             pushd "${OPENBLAS_ROOT}/lib"                                                                                                                                            
             ln -sf libopenblas.a liblapack.a                                                                                                                                        
             ln -sf libopenblas.a liblapacke.a                                                                                                                                       
@@ -85,7 +88,8 @@ jobs:
             cp "${VOSK_ROOT}/java/lib/linux-aarch64/vosk.jar" "${ARTIFACT_DIR}/"                                                                                                    
             cp "${VOSK_ROOT}/src/vosk_api.h" "${ARTIFACT_DIR}/"                                                                                                                     
             cp "${VOSK_ROOT}/src/model.h" "${ARTIFACT_DIR}/"                                                                                                                        
-            tar -C "${ARTIFACT_DIR}" -czf "${BUILD_ROOT}/vosk-linux-arm64.tar.gz" libvosk.so libvosk_jni.so vosk.jar vosk_api.h model.h                                             
+            tar -C "${ARTIFACT_DIR}" -czf "${BUILD_ROOT}/vosk-linux-arm64.tar.gz" \                                                                                                 
+              libvosk.so libvosk_jni.so vosk.jar vosk_api.h model.h                                                                                                                 
             sha256sum "${BUILD_ROOT}/vosk-linux-arm64.tar.gz" > "${BUILD_ROOT}/vosk-linux-arm64.tar.gz.sha256"                                                                      
                                                                                                                                                                                     
         - name: Upload artifacts                                                                                                                                                    
