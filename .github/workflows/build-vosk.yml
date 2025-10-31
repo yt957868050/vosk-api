@@ -1,114 +1,149 @@
-  name: Build Vosk ARM64                                                                                                                                                            
+  name: Build Vosk ARM64 Libs                                                                                                                                                       
                                                                                                                                                                                     
   on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
+    push:                                                                                                                                                                           
+      branches: [ main ]                                                                                                                                                            
+      paths:                                                                                                                                                                        
+        - '.github/workflows/build-vosk-arm64.yml'                                                                                                                                  
+        - 'build_vosk_arm64/**'                                                                                                                                                     
+    pull_request:                                                                                                                                                                   
+      branches: [ main ]                                                                                                                                                            
+      paths:                                                                                                                                                                        
+        - '.github/workflows/build-vosk-arm64.yml'                                                                                                                                  
+        - 'build_vosk_arm64/**'                                                                                                                                                     
                                                                                                                                                                                     
   jobs:                                                                                                                                                                             
     build:                                                                                                                                                                          
       runs-on: ubuntu-22.04-arm                                                                                                                                                     
                                                                                                                                                                                     
+      env:                                                                                                                                                                          
+        BUILD_ROOT: ${{ runner.temp }}/vosk-build                                                                                                                                   
+        OPENBLAS_TAG: v0.3.13                                                                                                                                                       
+        VOSK_TAG: v0.3.45                                                                                                                                                           
+                                                                                                                                                                                    
       steps:                                                                                                                                                                        
-        - uses: actions/checkout@v4                                                                                                                                                 
+        - name: Checkout repo                                                                                                                                                       
+          uses: actions/checkout@v4                                                                                                                                                 
                                                                                                                                                                                     
-        - name: Prepare path variables                                                                                                                                              
+        - name: Install system dependencies                                                                                                                                         
+          run: |                                                                                                                                                                    
+            sudo apt-get update -y                                                                                                                                                  
+            sudo apt-get install -y --no-install-recommends \                                                                                                                       
+              git build-essential gfortran \                                                                                                                                        
+              cmake unzip autoconf automake libtool sox \                                                                                                                           
+              python2 python-is-python2 python3 python-is-python3 \                                                                                                                 
+              swig wget curl libz-dev \                                                                                                                                             
+              openjdk-17-jdk-headless                                                                                                                                               
+                                                                                                                                                                                    
+        - name: Build OpenBLAS (armv8, no OpenMP)                                                                                                                                   
+          shell: bash                                                                                                                                                               
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
-            BUILD_ROOT="$RUNNER_TEMP/vosk-build"                                                                                                                                    
-            OPENBLAS_ROOT="$BUILD_ROOT/openblas-install"                                                                                                                            
-            KALDI_ROOT="$BUILD_ROOT/kaldi"                                                                                                                                          
-            VOSK_ROOT="$BUILD_ROOT/vosk-api"                                                                                                                                        
-            echo "BUILD_ROOT=$BUILD_ROOT" >> "$GITHUB_ENV"                                                                                                                          
-            echo "OPENBLAS_ROOT=$OPENBLAS_ROOT" >> "$GITHUB_ENV"                                                                                                                    
-            echo "KALDI_ROOT=$KALDI_ROOT" >> "$GITHUB_ENV"                                                                                                                          
-            echo "VOSK_ROOT=$VOSK_ROOT" >> "$GITHUB_ENV"                                                                                                                            
+            mkdir -p "${BUILD_ROOT}"                                                                                                                                                
+            if [ ! -d "${BUILD_ROOT}/openblas" ]; then                                                                                                                              
+              git clone --depth 1 --branch "${OPENBLAS_TAG}" \                                                                                                                      
+                https://github.com/OpenMathLib/OpenBLAS.git \                                                                                                                       
+                "${BUILD_ROOT}/openblas"                                                                                                                                            
+            fi                                                                                                                                                                      
+            pushd "${BUILD_ROOT}/openblas"                                                                                                                                          
+            make clean || true                                                                                                                                                      
+            make -j"$(nproc)" TARGET=ARMV8 USE_OPENMP=0 BINARY=64 \                                                                                                                 
+                 NO_SHARED=0 NO_STATIC=0 NUM_THREADS=1                                                                                                                              
+            make PREFIX="${BUILD_ROOT}/openblas-install" install                                                                                                                    
+            popd                                                                                                                                                                    
                                                                                                                                                                                     
-        - name: Install prerequisites                                                                                                                                               
+        - name: Build Kaldi (PIC static libs)                                                                                                                                       
+          shell: bash                                                                                                                                                               
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
-            sudo apt-get update                                                                                                                                                     
-            packages=(                                                                                                                                                              
-              build-essential                                                                                                                                                       
-              gfortran                                                                                                                                                              
-              git                                                                                                                                                                   
-              cmake                                                                                                                                                                 
-              automake                                                                                                                                                              
-              autoconf                                                                                                                                                              
-              libtool                                                                                                                                                               
-              python3                                                                                                                                                               
-              python3-dev                                                                                                                                                           
-              python3-distutils                                                                                                                                                     
-              python3-pip                                                                                                                                                           
-              python2                                                                                                                                                               
-              sox                                                                                                                                                                   
-              wget                                                                                                                                                                  
-              zlib1g-dev                                                                                                                                                            
-              pkg-config                                                                                                                                                            
-              unzip                                                                                                                                                                 
-              curl                                                                                                                                                                  
-            )                                                                                                                                                                       
-            sudo apt-get install -y --no-install-recommends "${packages[@]}"                                                                                                        
+            export KALDI_ROOT="${BUILD_ROOT}/kaldi"                                                                                                                                 
+            export OPENBLAS_PREFIX="${BUILD_ROOT}/openblas-install"                                                                                                                 
                                                                                                                                                                                     
-        - name: Create build directories                                                                                                                                            
-          run: |                                                                                                                                                                    
-            set -eux                                                                                                                                                                
-            rm -rf "$BUILD_ROOT"                                                                                                                                                    
-            mkdir -p "$BUILD_ROOT" "$OPENBLAS_ROOT"                                                                                                                                 
+            if [ ! -d "${KALDI_ROOT}" ]; then                                                                                                                                       
+              git clone --depth 1 https://github.com/alphacep/kaldi.git "${KALDI_ROOT}"                                                                                             
+            fi                                                                                                                                                                      
                                                                                                                                                                                     
-        - name: Build OpenBLAS (static + shared, no OpenMP)                                                                                                                         
-          run: |                                                                                                                                                                    
-            set -eux                                                                                                                                                                
-            cd "$BUILD_ROOT"                                                                                                                                                        
-            git clone --depth 1 --branch v0.3.13 https://github.com/OpenMathLib/OpenBLAS.git openblas-src                                                                           
-            cd openblas-src                                                                                                                                                         
-            make -j"$(nproc)" TARGET=ARMV8 USE_OPENMP=0                                                                                                                             
-            make PREFIX="$OPENBLAS_ROOT" install                                                                                                                                    
-            cd "$OPENBLAS_ROOT/lib"                                                                                                                                                 
-            for name in blas lapack; do                                                                                                                                             
-              ln -sf libopenblas.a "lib${name}.a"                                                                                                                                   
-              ln -sf libopenblas.so "lib${name}.so"                                                                                                                                 
-            done                                                                                                                                                                    
-                                                                                                                                                                                    
-        - name: Build Kaldi libraries                                                                                                                                               
-          run: |                                                                                                                                                                    
-            set -eux                                                                                                                                                                
-            cd "$BUILD_ROOT"                                                                                                                                                        
-            git clone --depth 1 https://github.com/alphacep/kaldi.git kaldi                                                                                                         
-            cd kaldi/tools                                                                                                                                                          
+            pushd "${KALDI_ROOT}/tools"                                                                                                                                             
             extras/check_dependencies.sh || true                                                                                                                                    
-            make OPENFST_CONFIGURE="--enable-static --enable-shared --with-pic --enable-ngram-fsts" -j"$(nproc)"                                                                    
-            cd ../src                                                                                                                                                               
-            CXXFLAGS="-fPIC -O2 -march=armv8-a -std=c++14" CFLAGS="-fPIC -O2 -march=armv8-a" ./configure --shared --static --use-cuda=no --openblas-root="$OPENBLAS_ROOT"           
-            make clean                                                                                                                                                              
-            make -j"$(nproc)"                                                                                                                                                       
+            make -j"$(nproc)" \                                                                                                                                                     
+              OPENFST_CONFIGURE="--enable-static --enable-shared --with-pic --enable-ngram-fsts"                                                                                    
+            popd                                                                                                                                                                    
                                                                                                                                                                                     
-        - name: Build Vosk libraries                                                                                                                                                
+            pushd "${KALDI_ROOT}/src"                                                                                                                                               
+            CFLAGS="-fPIC -O2 -march=armv8-a" \                                                                                                                                     
+            CXXFLAGS="-fPIC -O2 -march=armv8-a -std=c++14" \                                                                                                                        
+            LDFLAGS="-L${OPENBLAS_PREFIX}/lib" \                                                                                                                                    
+              ./configure --openblas-root="${OPENBLAS_PREFIX}" \                                                                                                                    
+                          --static --shared --use-cuda=no                                                                                                                           
+                                                                                                                                                                                    
+            make clean                                                                                                                                                              
+            make depend -j"$(nproc)"                                                                                                                                                
+            make -j"$(nproc)" \                                                                                                                                                     
+              base matrix util feat tree gmm lat lm fstext hmm transform \                                                                                                          
+              cudamatrix online2 ivector rnnlm nnet3                                                                                                                                
+            popd                                                                                                                                                                    
+                                                                                                                                                                                    
+        - name: Build Vosk core & JNI                                                                                                                                               
+          shell: bash                                                                                                                                                               
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
-            cd "$BUILD_ROOT"                                                                                                                                                        
-            git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git vosk-api                                                                                  
-            cd vosk-api                                                                                                                                                             
-            sed -i 's|#include "decoder/decoder-wrappers.h"|#include "decoder/decoder-wrappers.h"\n#include "lat/word-align-lattice.h"|' src/recognizer.cc                          
-            sed -i 's/WordAlignLatticePartial(/kaldi::WordAlignLattice(/g' src/recognizer.cc                                                                                        
+            export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64                                                                                                                     
+            export PATH="${JAVA_HOME}/bin:${PATH}"                                                                                                                                  
+                                                                                                                                                                                    
+            export BUILD_ROOT="${BUILD_ROOT}"                                                                                                                                       
+            export OPENBLAS_PREFIX="${BUILD_ROOT}/openblas-install"                                                                                                                 
+            export KALDI_ROOT="${BUILD_ROOT}/kaldi"                                                                                                                                 
+            export VOSK_ROOT="${BUILD_ROOT}/vosk-api"                                                                                                                               
+            export ARTIFACT_DIR="${BUILD_ROOT}/artifacts"                                                                                                                           
+                                                                                                                                                                                    
+            mkdir -p "${ARTIFACT_DIR}/include"                                                                                                                                      
+                                                                                                                                                                                    
+            if [ ! -d "${VOSK_ROOT}" ]; then                                                                                                                                        
+              git clone --depth 1 --branch "${VOSK_TAG}" \                                                                                                                          
+                https://github.com/alphacep/vosk-api.git "${VOSK_ROOT}"                                                                                                             
+            fi                                                                                                                                                                      
+                                                                                                                                                                                    
+            pushd "${VOSK_ROOT}"                                                                                                                                                    
+                                                                                                                                                                                    
+            if ! grep -q 'word-align-lattice.h' src/recognizer.cc ; then                                                                                                            
+              sed -i 's|#include "decoder/decoder-wrappers.h"|#include "decoder/decoder-wrappers.h"\n#include "lat/word-align-lattice.h"|' src/recognizer.cc                        
+              sed -i 's/WordAlignLatticePartial(/kaldi::WordAlignLattice(/g' src/recognizer.cc                                                                                      
+            fi                                                                                                                                                                      
+                                                                                                                                                                                    
             sed -i 's|install/lib/liblapacke.a install/lib/libf2c.a|install/lib/liblapacke.a|' src/Makefile                                                                         
-            export KALDI_ROOT="$KALDI_ROOT"                                                                                                                                         
-            export LD_LIBRARY_PATH="$KALDI_ROOT/src/lib:$LD_LIBRARY_PATH"                                                                                                           
+                                                                                                                                                                                    
+            export LD_LIBRARY_PATH="${KALDI_ROOT}/src/lib:${LD_LIBRARY_PATH:-}"                                                                                                     
+                                                                                                                                                                                    
             make -C src clean                                                                                                                                                       
             make -C src -j"$(nproc)"                                                                                                                                                
                                                                                                                                                                                     
-        - name: Collect artifacts                                                                                                                                                   
-          run: |                                                                                                                                                                    
-            set -eux                                                                                                                                                                
-            ART_DIR="$BUILD_ROOT/artifacts"                                                                                                                                         
-            mkdir -p "$ART_DIR/lib" "$ART_DIR/include"                                                                                                                              
-            cp "$VOSK_ROOT/src/libvosk.so" "$ART_DIR/lib/"                                                                                                                          
-            if [ -f "$VOSK_ROOT/src/libvosk_jni.so" ]; then                                                                                                                         
-              cp "$VOSK_ROOT/src/libvosk_jni.so" "$ART_DIR/lib/"                                                                                                                    
-            fi                                                                                                                                                                      
-            cp "$VOSK_ROOT/src/"*.h "$ART_DIR/include/"                                                                                                                             
-            printf 'git_commit=%s\n' "$(cd "$VOSK_ROOT" && git rev-parse HEAD)" > "$ART_DIR/build-info.txt"                                                                         
+            cp -f src/libvosk.so "${ARTIFACT_DIR}/"                                                                                                                                 
+            cp -f src/vosk_api.h src/vosk_api.cpp "${ARTIFACT_DIR}/include/"                                                                                                        
                                                                                                                                                                                     
-        - name: Upload libraries                                                                                                                                                    
-          uses: actions/upload-artifact@v4                                                                                                                                          
+            JNI_WRAP="${VOSK_ROOT}/java/src/main/jni/vosk_wrap.cxx"                                                                                                                 
+            if [ ! -f "${JNI_WRAP}" ]; then                                                                                                                                         
+              echo "Error: ${JNI_WRAP} missing"; exit 1                                                                                                                             
+            fi                                                                                                                                                                      
+                                                                                                                                                                                    
+            g++ -shared -fPIC -std=c++17 \                                                                                                                                          
+              -I"${JAVA_HOME}/include" -I"${JAVA_HOME}/include/linux" \                                                                                                             
+              -I"${VOSK_ROOT}/src" \                                                                                                                                                
+              -L"${ARTIFACT_DIR}" -lvosk \                                                                                                                                          
+              "${JNI_WRAP}" -o "${ARTIFACT_DIR}/libvosk_jni.so"                                                                                                                     
+                                                                                                                                                                                    
+            popd                                                                                                                                                                    
+                                                                                                                                                                                    
+        - name: Package artifacts                                                                                                                                                   
+          run: |                                                                                                                                                                    
+            tar -C "${BUILD_ROOT}/artifacts" -czf "${BUILD_ROOT}/vosk-arm64-libs.tar.gz" .                                                                                          
+                                                                                                                                                                                    
+        - name: Upload libvosk artifacts                                                                                                                                            
+          uses: actions/upload-artifact@v3                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-libs                                                                                                                                                   
-            path: ${{ env.BUILD_ROOT }}/artifacts
+            path: |                                                                                                                                                                 
+              ${{ env.BUILD_ROOT }}/artifacts/libvosk.so                                                                                                                            
+              ${{ env.BUILD_ROOT }}/artifacts/libvosk_jni.so                                                                                                                        
+              ${{ env.BUILD_ROOT }}/artifacts/include                                                                                                                               
+              ${{ env.BUILD_ROOT }}/vosk-arm64-libs.tar.gz    
