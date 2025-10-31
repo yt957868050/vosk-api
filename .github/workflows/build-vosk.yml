@@ -96,6 +96,19 @@ jobs:
           sed -i 's|#include "decoder/decoder-wrappers.h"|#include "decoder/decoder-wrappers.h"\n#include "lat/word-align-lattice.h"|' "$VOSK_SRC/src/recognizer.cc"
           sed -i 's/WordAlignLatticePartial(/kaldi::WordAlignLattice(/g' "$VOSK_SRC/src/recognizer.cc"
 
+          mkdir -p "$VOSK_SRC/java/src/main/jni" "$VOSK_SRC/java/src/main/swig"
+          cat <<'SWIG' > "$VOSK_SRC/java/src/main/jni/vosk.i"
+%module vosk
+%{
+#include "vosk_api.h"
+%}
+
+%include "vosk_api.h"
+SWIG
+
+          swig -java -c++ -package org.vosk -outdir "$VOSK_SRC/java/src/main/swig" \
+            -o "$VOSK_SRC/java/src/main/jni/vosk_wrap.cxx" "$VOSK_SRC/java/src/main/jni/vosk.i"
+
           mkdir -p "$KALDI_ROOT/tools/OpenBLAS/install"
           rsync -a "$OPENBLAS_INSTALL/" "$KALDI_ROOT/tools/OpenBLAS/install/"
 
