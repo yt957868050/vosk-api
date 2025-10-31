@@ -91,22 +91,6 @@ jobs:
 
           sed -i 's|#include "decoder/decoder-wrappers.h"|#include "decoder/decoder-wrappers.h"\n#include "lat/word-align-lattice.h"|' "$VOSK_SRC/src/recognizer.cc"
           sed -i 's/WordAlignLatticePartial(/kaldi::WordAlignLattice(/g' "$VOSK_SRC/src/recognizer.cc"
-          python3 - <<'PY'
-import os
-from pathlib import Path
-makefile = Path(os.environ["VOSK_SRC"]) / "src" / "Makefile"
-text = makefile.read_text().replace("\r\n", "\n")
-for needle in (
-    "        $(OPENBLAS_ROOT)/lib/liblapack.a \\\n",
-    "        $(OPENBLAS_ROOT)/lib/libblas.a \\\n",
-    "        $(OPENBLAS_ROOT)/lib/libf2c.a \\\n",
-    "        $(OPENBLAS_ROOT)/lib/libf2c.a\n",
-):
-    text = text.replace(needle, "")
-text = text.replace("$(OPENBLAS_ROOT)/lib/libopenblas.a \\\n", "$(OPENBLAS_ROOT)/lib/libopenblas.a\n")
-text = text.replace("-lopenblas -llapack -lblas -lf2c", "-lopenblas")
-makefile.write_text(text)
-PY
 
           mkdir -p "$KALDI_ROOT/tools/OpenBLAS/install"
           rsync -a "$OPENBLAS_INSTALL/" "$KALDI_ROOT/tools/OpenBLAS/install/"
