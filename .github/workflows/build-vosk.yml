@@ -7,9 +7,6 @@ jobs:
   build:
     runs-on: ubuntu-22.04-arm
 
-    env:
-      BUILD_ROOT: ${{ env.RUNNER_TEMP }}/vosk-build
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,6 +14,7 @@ jobs:
       - name: Install build prerequisites
         run: |
           set -euxo pipefail
+          BUILD_ROOT="${RUNNER_TEMP}/vosk-build"
           sudo apt-get update
           packages=(
             build-essential
@@ -46,6 +44,7 @@ jobs:
       - name: Build OpenBLAS (ARM64)
         run: |
           set -euxo pipefail
+          BUILD_ROOT="${RUNNER_TEMP}/vosk-build"
           OPENBLAS_SRC="$BUILD_ROOT/openblas-src"
           OPENBLAS_INSTALL="$BUILD_ROOT/openblas-install"
 
@@ -58,6 +57,7 @@ jobs:
       - name: Clone and build Kaldi (libraries only)
         run: |
           set -euxo pipefail
+          BUILD_ROOT="${RUNNER_TEMP}/vosk-build"
           OPENBLAS_INSTALL="$BUILD_ROOT/openblas-install"
           KALDI_ROOT="$BUILD_ROOT/kaldi"
 
@@ -81,6 +81,7 @@ jobs:
       - name: Build Vosk native libraries
         run: |
           set -euxo pipefail
+          BUILD_ROOT="${RUNNER_TEMP}/vosk-build"
           KALDI_ROOT="$BUILD_ROOT/kaldi"
           OPENBLAS_INSTALL="$BUILD_ROOT/openblas-install"
           VOSK_SRC="$BUILD_ROOT/vosk-api"
@@ -133,6 +134,7 @@ jobs:
       - name: Package artifacts
         run: |
           set -euxo pipefail
+          BUILD_ROOT="${RUNNER_TEMP}/vosk-build"
           tar -C "$BUILD_ROOT/artifacts" -czf "$BUILD_ROOT/vosk-arm64-libs.tar.gz" .
 
       - name: Upload libraries
@@ -140,8 +142,8 @@ jobs:
         with:
           name: vosk-arm64-libs
           path: |
-            ${{ env.BUILD_ROOT }}/artifacts/libvosk.so
-            ${{ env.BUILD_ROOT }}/artifacts/libvosk_jni.so
-            ${{ env.BUILD_ROOT }}/artifacts/vosk_api.h
-            ${{ env.BUILD_ROOT }}/artifacts/vosk_api.cpp
-            ${{ env.BUILD_ROOT }}/vosk-arm64-libs.tar.gz
+            ${{ runner.temp }}/vosk-build/artifacts/libvosk.so
+            ${{ runner.temp }}/vosk-build/artifacts/libvosk_jni.so
+            ${{ runner.temp }}/vosk-build/artifacts/vosk_api.h
+            ${{ runner.temp }}/vosk-build/artifacts/vosk_api.cpp
+            ${{ runner.temp }}/vosk-build/vosk-arm64-libs.tar.gz
