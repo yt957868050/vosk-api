@@ -114,4 +114,4 @@
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-libs                                                                                                                                                   
-            path: ${{ env.BUILD_DIR }}/artifacts   
+            path: ${{ env.BUILD_DIR }}/artifacts 
