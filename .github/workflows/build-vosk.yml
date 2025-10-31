@@ -1,99 +1,110 @@
-name: Build Vosk ARM64                                                                                                                                                            
+  name: Build Vosk ARM64                                                                                                                                                            
                                                                                                                                                                                     
-on:                                                                                                                                                                               
+  on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-jobs:                                                                                                                                                                             
-    build-arm64:                                                                                                                                                                    
+  jobs:                                                                                                                                                                             
+    build:                                                                                                                                                                          
       runs-on: ubuntu-22.04-arm                                                                                                                                                     
-      timeout-minutes: 180                                                                                                                                                          
+      env:                                                                                                                                                                          
+        BUILD_DIR: ${{ runner.temp }}/vosk-build                                                                                                                                    
+        OPENBLAS_INSTALL: ${{ runner.temp }}/vosk-build/openblas-install                                                                                                            
+        KALDI_DIR: ${{ runner.temp }}/vosk-build/kaldi                                                                                                                              
+        VOSK_DIR: ${{ runner.temp }}/vosk-build/vosk-api                                                                                                                            
                                                                                                                                                                                     
       steps:                                                                                                                                                                        
-        - name: Checkout (current repo just for workflow artifacts)                                                                                                                 
-          uses: actions/checkout@v4                                                                                                                                                 
+        - uses: actions/checkout@v4                                                                                                                                                 
                                                                                                                                                                                     
-        - name: Install build dependencies                                                                                                                                          
+        - name: Install prerequisites                                                                                                                                               
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
             sudo apt-get update                                                                                                                                                     
-            sudo apt-get install -y --no-install-recommends build-essential gfortran git wget curl unzip zip cmake pkg-config python3 python3-dev python3-distutils python2 autoconf automake libtool swig zlib1g-dev sox                                                                                                                                              
+            sudo apt-get install -y --no-install-recommends \                                                                                                                       
+              build-essential \                                                                                                                                                     
+              gfortran \                                                                                                                                                            
+              git \                                                                                                                                                                 
+              cmake \                                                                                                                                                               
+              automake \                                                                                                                                                            
+              autoconf \                                                                                                                                                            
+              libtool \                                                                                                                                                             
+              python3 \                                                                                                                                                             
+              python3-dev \                                                                                                                                                         
+              python3-distutils \                                                                                                                                                   
+              python3-pip \                                                                                                                                                         
+              sox \                                                                                                                                                                 
+              wget \                                                                                                                                                                
+              zlib1g-dev \                                                                                                                                                          
+              pkg-config \                                                                                                                                                          
+              unzip \                                                                                                                                                               
+              curl                                                                                                                                                                  
                                                                                                                                                                                     
-        - name: Build OpenBLAS, Kaldi (libs only, -fPIC) and Vosk                                                                                                                   
-          env:                                                                                                                                                                      
-            BUILD_ROOT: ${{ runner.temp }}/vosk-build                                                                                                                               
-            COMMON_FLAGS: "-fPIC -O2 -march=armv8-a"                                                                                                                                
+        - name: Prepare build directories                                                                                                                                           
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
+            rm -rf "$BUILD_DIR"                                                                                                                                                     
+            mkdir -p "$BUILD_DIR"                                                                                                                                                   
+            mkdir -p "$OPENBLAS_INSTALL"                                                                                                                                            
                                                                                                                                                                                     
-            mkdir -p "${BUILD_ROOT}"                                                                                                                                                
-            KALDI_ROOT="${BUILD_ROOT}/kaldi"                                                                                                                                        
-            OPENBLAS_ROOT="${BUILD_ROOT}/openblas-install"                                                                                                                          
-            VOSK_ROOT="${BUILD_ROOT}/vosk-api"                                                                                                                                      
-                                                                                                                                                                                    
-            git clone --depth 1 --branch v0.3.13 https://github.com/OpenMathLib/OpenBLAS.git "${BUILD_ROOT}/openblas-src"                                                           
-            make -C "${BUILD_ROOT}/openblas-src" TARGET=ARMV8 BINARY=64 USE_OPENMP=0 CFLAGS="${COMMON_FLAGS}" FCFLAGS="${COMMON_FLAGS}" PREFIX="${OPENBLAS_ROOT}"                   
-            make -C "${BUILD_ROOT}/openblas-src" TARGET=ARMV8 BINARY=64 USE_OPENMP=0 PREFIX="${OPENBLAS_ROOT}" install                                                              
-            pushd "${OPENBLAS_ROOT}/lib"                                                                                                                                            
-            ln -sf libopenblas.a liblapack.a                                                                                                                                        
-            ln -sf libopenblas.a liblapacke.a                                                                                                                                       
-            ln -sf libopenblas.a libblas.a                                                                                                                                          
-            ln -sf libopenblas.a libf2c.a                                                                                                                                           
-            ln -sf libopenblas.so liblapack.so                                                                                                                                      
-            ln -sf libopenblas.so liblapacke.so                                                                                                                                     
-            ln -sf libopenblas.so libblas.so                                                                                                                                        
-            ln -sf libopenblas.so libf2c.so                                                                                                                                         
-            popd                                                                                                                                                                    
-                                                                                                                                                                                    
-            git clone --depth 1 https://github.com/alphacep/kaldi.git "${KALDI_ROOT}"                                                                                               
-            export CXXFLAGS="${COMMON_FLAGS} -std=c++14"                                                                                                                            
-            export CFLAGS="${COMMON_FLAGS}"                                                                                                                                         
-            export LDFLAGS="-L${OPENBLAS_ROOT}/lib"                                                                                                                                 
-            export OPENBLAS_NUM_THREADS=1                                                                                                                                           
-                                                                                                                                                                                    
-            pushd "${KALDI_ROOT}/tools"                                                                                                                                             
-            extras/check_dependencies.sh || true                                                                                                                                    
-            make OPENFST_CONFIGURE="--enable-shared --enable-static --enable-pic --enable-ngram-fsts" -j"$(nproc)"                                                                  
-            popd                                                                                                                                                                    
-                                                                                                                                                                                    
-            pushd "${KALDI_ROOT}/src"                                                                                                                                               
-            CXXFLAGS="${CXXFLAGS}" CFLAGS="${CFLAGS}" ./configure --shared --static --use-cuda=no --openblas-root="${OPENBLAS_ROOT}"                                                
-            make depend -j"$(nproc)"                                                                                                                                                
-            for dir in base matrix util tree gmm transform feat lat lm fstext hmm decoder cudamatrix ivector online2 nnet2 nnet3 chain rnnlm sgmm2; do                              
-              make -C "$dir" -j"$(nproc)"                                                                                                                                           
+        - name: Build OpenBLAS (static + shared, no OpenMP)                                                                                                                         
+          run: |                                                                                                                                                                    
+            set -eux                                                                                                                                                                
+            cd "$BUILD_DIR"                                                                                                                                                         
+            git clone --depth 1 --branch v0.3.13 https://github.com/OpenMathLib/OpenBLAS.git openblas-src                                                                           
+            cd openblas-src                                                                                                                                                         
+            make -j"$(nproc)" TARGET=ARMV8 USE_OPENMP=0                                                                                                                             
+            make PREFIX="$OPENBLAS_INSTALL" install                                                                                                                                 
+            cd "$OPENBLAS_INSTALL/lib"                                                                                                                                              
+            for name in blas lapack; do                                                                                                                                             
+              ln -sf libopenblas.a "lib${name}.a"                                                                                                                                   
+              ln -sf libopenblas.so "lib${name}.so"                                                                                                                                 
             done                                                                                                                                                                    
-            popd                                                                                                                                                                    
                                                                                                                                                                                     
-            git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git "${VOSK_ROOT}"                                                                            
-            mkdir -p "${KALDI_ROOT}/tools/OpenBLAS"                                                                                                                                 
-            rsync -a "${OPENBLAS_ROOT}/" "${KALDI_ROOT}/tools/OpenBLAS/install/"                                                                                                    
+        - name: Build Kaldi core libraries                                                                                                                                          
+          run: |                                                                                                                                                                    
+            set -eux                                                                                                                                                                
+            cd "$BUILD_DIR"                                                                                                                                                         
+            git clone --depth 1 https://github.com/alphacep/kaldi.git kaldi                                                                                                         
+            cd kaldi/tools                                                                                                                                                          
+            extras/check_dependencies.sh || true                                                                                                                                    
+            make OPENFST_CONFIGURE="--enable-static --enable-shared --with-pic --enable-ngram-fsts" -j"$(nproc)"                                                                    
+            cd ../src                                                                                                                                                               
+            CXXFLAGS="-fPIC -O2 -march=armv8-a -std=c++14" CFLAGS="-fPIC -O2 -march=armv8-a" \                                                                                      
+              ./configure --shared --static --use-cuda=no --openblas-root="$OPENBLAS_INSTALL"                                                                                       
+            make clean                                                                                                                                                              
+            make -j"$(nproc)" \                                                                                                                                                     
+              kaldi-online2 kaldi-decoder kaldi-ivector kaldi-gmm kaldi-tree \                                                                                                      
+              kaldi-feat kaldi-lat kaldi-lm kaldi-rnnlm kaldi-hmm kaldi-nnet3 \                                                                                                     
+              kaldi-transform kaldi-cudamatrix kaldi-matrix kaldi-fstext kaldi-util kaldi-base                                                                                      
                                                                                                                                                                                     
-            pushd "${VOSK_ROOT}"                                                                                                                                                    
+        - name: Build Vosk libraries                                                                                                                                                
+          run: |                                                                                                                                                                    
+            set -eux                                                                                                                                                                
+            cd "$BUILD_DIR"                                                                                                                                                         
+            git clone --depth 1 --branch v0.3.45 https://github.com/alphacep/vosk-api.git vosk-api                                                                                  
+            cd vosk-api                                                                                                                                                             
             sed -i 's|#include "decoder/decoder-wrappers.h"|#include "decoder/decoder-wrappers.h"\n#include "lat/word-align-lattice.h"|' src/recognizer.cc                          
             sed -i 's/WordAlignLatticePartial(/kaldi::WordAlignLattice(/g' src/recognizer.cc                                                                                        
             sed -i 's|install/lib/liblapacke.a install/lib/libf2c.a|install/lib/liblapacke.a|' src/Makefile                                                                         
-                                                                                                                                                                                    
-            export KALDI_ROOT                                                                                                                                                       
-            export LD_LIBRARY_PATH="${KALDI_ROOT}/src/lib:${LD_LIBRARY_PATH:-}"                                                                                                     
-                                                                                                                                                                                    
+            export KALDI_ROOT="$KALDI_DIR"                                                                                                                                          
+            export LD_LIBRARY_PATH="$KALDI_DIR/src/lib:$LD_LIBRARY_PATH"                                                                                                            
             make -C src clean                                                                                                                                                       
             make -C src -j"$(nproc)"                                                                                                                                                
-            make -C java -j"$(nproc)"                                                                                                                                               
-            popd                                                                                                                                                                    
                                                                                                                                                                                     
-            ARTIFACT_DIR="${BUILD_ROOT}/artifacts"                                                                                                                                  
-            mkdir -p "${ARTIFACT_DIR}"                                                                                                                                              
-            cp "${VOSK_ROOT}/src/libvosk.so" "${ARTIFACT_DIR}/"                                                                                                                     
-            cp "${VOSK_ROOT}/java/lib/linux-aarch64/libvosk_jni.so" "${ARTIFACT_DIR}/"                                                                                              
-            cp "${VOSK_ROOT}/java/lib/linux-aarch64/vosk.jar" "${ARTIFACT_DIR}/"                                                                                                    
-            cp "${VOSK_ROOT}/src/vosk_api.h" "${ARTIFACT_DIR}/"                                                                                                                     
-            cp "${VOSK_ROOT}/src/model.h" "${ARTIFACT_DIR}/"                                                                                                                        
-            tar -C "${ARTIFACT_DIR}" -czf "${BUILD_ROOT}/vosk-linux-arm64.tar.gz" libvosk.so libvosk_jni.so vosk.jar vosk_api.h model.h                                             
-            sha256sum "${BUILD_ROOT}/vosk-linux-arm64.tar.gz" > "${BUILD_ROOT}/vosk-linux-arm64.tar.gz.sha256"                                                                      
+        - name: Collect artifacts                                                                                                                                                   
+          run: |                                                                                                                                                                    
+            set -eux                                                                                                                                                                
+            ARTifacts_DIR="$BUILD_DIR/artifacts"                                                                                                                                    
+            mkdir -p "$ARTifacts_DIR/lib"                                                                                                                                           
+            mkdir -p "$ARTifacts_DIR/include"                                                                                                                                       
+            cp "$VOSK_DIR/src/libvosk.so" "$ARTifacts_DIR/lib/"                                                                                                                     
+            if [ -f "$VOSK_DIR/src/libvosk_jni.so" ]; then                                                                                                                          
+              cp "$VOSK_DIR/src/libvosk_jni.so" "$ARTifacts_DIR/lib/"                                                                                                               
+            fi                                                                                                                                                                      
+            cp "$VOSK_DIR/src/"*.h "$ARTifacts_DIR/include/"                                                                                                                        
+            printf 'git_commit=%s\n' "$(cd "$VOSK_DIR" && git rev-parse HEAD)" > "$ARTifacts_DIR/build-info.txt"                                                                    
                                                                                                                                                                                     
-        - name: Upload artifacts                                                                                                                                                    
+        - name: Upload libraries                                                                                                                                                    
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-libs                                                                                                                                                   
-            path: |                                                                                                                                                                 
-              ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz                                                                                                                 
-              ${{ runner.temp }}/vosk-build/vosk-linux-arm64.tar.gz.sha256 
+            path: ${{ env.BUILD_DIR }}/artifacts  
