@@ -34,6 +34,7 @@ jobs:
             python3
             python-is-python3
             python3-dev
+            python2
             openjdk-11-jdk
             maven
             swig
@@ -65,6 +66,7 @@ jobs:
           pushd "$KALDI_ROOT/tools"
           extras/check_dependencies.sh || true
           make -j"$(nproc)" OPENFST_CONFIGURE="--enable-static --enable-shared --with-pic --enable-ngram-fsts"
+          python2 extras/generate_concat_table.py || true
           popd
 
           pushd "$KALDI_ROOT/src"
