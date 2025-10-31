@@ -3,7 +3,7 @@ name: Build Vosk ARM64
 on:                                                                                                                                                                               
     workflow_dispatch:                                                                                                                                                              
                                                                                                                                                                                     
-env:                                                                                                                                                                              
+env:                                                                                                                                                                               
     BUILD_ROOT: ${{ runner.temp }}/vosk-build                                                                                                                                       
                                                                                                                                                                                     
 jobs:                                                                                                                                                                             
