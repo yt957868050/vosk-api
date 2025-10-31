@@ -6,14 +6,22 @@
   jobs:                                                                                                                                                                             
     build:                                                                                                                                                                          
       runs-on: ubuntu-22.04-arm                                                                                                                                                     
-      env:                                                                                                                                                                          
-        BUILD_DIR: ${{ runner.temp }}/vosk-build                                                                                                                                    
-        OPENBLAS_INSTALL: ${{ runner.temp }}/vosk-build/openblas-install                                                                                                            
-        KALDI_DIR: ${{ runner.temp }}/vosk-build/kaldi                                                                                                                              
-        VOSK_DIR: ${{ runner.temp }}/vosk-build/vosk-api                                                                                                                            
                                                                                                                                                                                     
       steps:                                                                                                                                                                        
         - uses: actions/checkout@v4                                                                                                                                                 
+                                                                                                                                                                                    
+        - name: Define build paths                                                                                                                                                  
+          id: paths                                                                                                                                                                 
+          run: |                                                                                                                                                                    
+            set -eux                                                                                                                                                                
+            BUILD_DIR="$RUNNER_TEMP/vosk-build"                                                                                                                                     
+            OPENBLAS_INSTALL="$BUILD_DIR/openblas-install"                                                                                                                          
+            KALDI_DIR="$BUILD_DIR/kaldi"                                                                                                                                            
+            VOSK_DIR="$BUILD_DIR/vosk-api"                                                                                                                                          
+            echo "BUILD_DIR=$BUILD_DIR" >> "$GITHUB_ENV"                                                                                                                            
+            echo "OPENBLAS_INSTALL=$OPENBLAS_INSTALL" >> "$GITHUB_ENV"                                                                                                              
+            echo "KALDI_DIR=$KALDI_DIR" >> "$GITHUB_ENV"                                                                                                                            
+            echo "VOSK_DIR=$VOSK_DIR" >> "$GITHUB_ENV"                                                                                                                              
                                                                                                                                                                                     
         - name: Install prerequisites                                                                                                                                               
           run: |                                                                                                                                                                    
@@ -93,18 +101,18 @@
         - name: Collect artifacts                                                                                                                                                   
           run: |                                                                                                                                                                    
             set -eux                                                                                                                                                                
-            ARTifacts_DIR="$BUILD_DIR/artifacts"                                                                                                                                    
-            mkdir -p "$ARTifacts_DIR/lib"                                                                                                                                           
-            mkdir -p "$ARTifacts_DIR/include"                                                                                                                                       
-            cp "$VOSK_DIR/src/libvosk.so" "$ARTifacts_DIR/lib/"                                                                                                                     
+            ART_DIR="$BUILD_DIR/artifacts"                                                                                                                                          
+            mkdir -p "$ART_DIR/lib"                                                                                                                                                 
+            mkdir -p "$ART_DIR/include"                                                                                                                                             
+            cp "$VOSK_DIR/src/libvosk.so" "$ART_DIR/lib/"                                                                                                                           
             if [ -f "$VOSK_DIR/src/libvosk_jni.so" ]; then                                                                                                                          
-              cp "$VOSK_DIR/src/libvosk_jni.so" "$ARTifacts_DIR/lib/"                                                                                                               
+              cp "$VOSK_DIR/src/libvosk_jni.so" "$ART_DIR/lib/"                                                                                                                     
             fi                                                                                                                                                                      
-            cp "$VOSK_DIR/src/"*.h "$ARTifacts_DIR/include/"                                                                                                                        
-            printf 'git_commit=%s\n' "$(cd "$VOSK_DIR" && git rev-parse HEAD)" > "$ARTifacts_DIR/build-info.txt"                                                                    
+            cp "$VOSK_DIR/src/"*.h "$ART_DIR/include/"                                                                                                                              
+            printf 'git_commit=%s\n' "$(cd "$VOSK_DIR" && git rev-parse HEAD)" > "$ART_DIR/build-info.txt"                                                                          
                                                                                                                                                                                     
         - name: Upload libraries                                                                                                                                                    
           uses: actions/upload-artifact@v4                                                                                                                                          
           with:                                                                                                                                                                     
             name: vosk-arm64-libs                                                                                                                                                   
-            path: ${{ env.BUILD_DIR }}/artifacts  
+            path: ${{ env.BUILD_DIR }}/artifacts 
