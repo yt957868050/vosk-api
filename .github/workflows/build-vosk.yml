@@ -54,6 +54,10 @@ jobs:
           make -C "$OPENBLAS_SRC" TARGET=ARMV8 USE_OPENMP=0 DYNAMIC_ARCH=0 NO_SHARED=0 NO_STATIC=0 BINARY=64 -j"$(nproc)"
           make -C "$OPENBLAS_SRC" PREFIX="$OPENBLAS_INSTALL" install
 
+          for alias in liblapack.a libblas.a libf2c.a; do
+            ln -sf libopenblas.a "$OPENBLAS_INSTALL/lib/$alias"
+          done
+
       - name: Clone and build Kaldi (libraries only)
         run: |
           set -euxo pipefail
