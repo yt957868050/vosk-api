@@ -85,7 +85,10 @@ jobs:
           mkdir -p "$KALDI_ROOT/src/lib"
           for name in online2 decoder ivector gmm tree feat lat lm rnnlm hmm nnet3 transform cudamatrix matrix fstext util base; do
             src_lib="$KALDI_ROOT/src/${name}/kaldi-${name}.a"
-            [ -f "$src_lib" ] && cp "$src_lib" "$KALDI_ROOT/src/lib/"
+            if [ -f "$src_lib" ]; then
+              cp "$src_lib" "$KALDI_ROOT/src/lib/"
+              ln -sf "kaldi-${name}.a" "$KALDI_ROOT/src/lib/libkaldi-${name}.a"
+            fi
           done
 
       - name: Build Vosk native libraries
