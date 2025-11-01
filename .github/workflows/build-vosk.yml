@@ -156,7 +156,7 @@ jobs:
 
           cp "$VOSK_SRC/src/libvosk.so" "$JNI_OUT_DIR/"
           cp "$VOSK_SRC/src/vosk_api.h" "$JNI_OUT_DIR/"
-          cp "$VOSK_SRC/src/vosk_api.cpp" "$JNI_OUT_DIR/"
+          cp "$VOSK_SRC/src/vosk_api.cc" "$JNI_OUT_DIR/vosk_api.cpp"
 
       - name: Package artifacts
         run: |
