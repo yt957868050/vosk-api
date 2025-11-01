@@ -82,6 +82,12 @@ jobs:
           make -j"$(nproc)" base matrix util feat tree gmm lat lm fstext hmm transform cudamatrix online2 ivector rnnlm nnet3
           popd
 
+          mkdir -p "$KALDI_ROOT/src/lib"
+          for name in online2 decoder ivector gmm tree feat lat lm rnnlm hmm nnet3 transform cudamatrix matrix fstext util base; do
+            src_lib="$KALDI_ROOT/src/${name}/kaldi-${name}.a"
+            [ -f "$src_lib" ] && cp "$src_lib" "$KALDI_ROOT/src/lib/"
+          done
+
       - name: Build Vosk native libraries
         run: |
           set -euxo pipefail
