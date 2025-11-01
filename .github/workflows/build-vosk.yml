@@ -103,9 +103,12 @@ jobs:
             '#include "vosk_api.h"' \
             '%}' \
             '' \
-            '%include "vosk_api.h"' > "$VOSK_SRC/java/src/main/jni/vosk.i"
+            '%include "vosk_api.h"' \
+            > "$VOSK_SRC/java/src/main/jni/vosk.i"
 
-          swig -java -c++ -package org.vosk -outdir "$VOSK_SRC/java/src/main/swig" \
+          cp "$VOSK_SRC/src/vosk_api.h" "$VOSK_SRC/java/src/main/jni/"
+
+          swig -java -c++ -I"$VOSK_SRC/java/src/main/jni" -package org.vosk -outdir "$VOSK_SRC/java/src/main/swig" \
             -o "$VOSK_SRC/java/src/main/jni/vosk_wrap.cxx" "$VOSK_SRC/java/src/main/jni/vosk.i"
 
           mkdir -p "$KALDI_ROOT/tools/OpenBLAS/install"
