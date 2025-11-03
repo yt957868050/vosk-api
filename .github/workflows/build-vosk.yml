@@ -191,8 +191,5 @@ jobs:
         with:
           name: vosk-arm64-libs
           path: |
-            ${{ runner.temp }}/vosk-build/artifacts/libvosk.so
-            ${{ runner.temp }}/vosk-build/artifacts/libvosk_jni.so
-            ${{ runner.temp }}/vosk-build/artifacts/vosk_api.h
-            ${{ runner.temp }}/vosk-build/artifacts/vosk_api.cpp
+            ${{ runner.temp }}/vosk-build/artifacts/
             ${{ runner.temp }}/vosk-build/vosk-arm64-libs.tar.gz
