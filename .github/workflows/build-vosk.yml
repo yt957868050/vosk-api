@@ -174,6 +174,12 @@ jobs:
           cp "$VOSK_SRC/src/vosk_api.h" "$JNI_OUT_DIR/"
           cp "$VOSK_SRC/src/vosk_api.cc" "$JNI_OUT_DIR/vosk_api.cpp"
 
+      - name: Inspect artifacts directory
+        run: |
+          set -euxo pipefail
+          BUILD_ROOT="${RUNNER_TEMP}/vosk-build"
+          ls -lh "$BUILD_ROOT/artifacts"
+
       - name: Package artifacts
         run: |
           set -euxo pipefail
