@@ -148,6 +148,8 @@ jobs:
 
           mkdir -p "$JNI_OUT_DIR"
 
+          JNI_LIB="$VOSK_SRC/java/src/main/jni/libvosk_jni.so"
+
           g++ -shared -fPIC -O2 -std=c++17 \
             -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" \
             -I"$VOSK_SRC/java/src/main/jni" \
@@ -165,8 +167,9 @@ jobs:
             -L"$OPENBLAS_INSTALL/lib" -lopenblas \
             -ldl -lpthread -lm \
             -Wl,-rpath,'$ORIGIN' \
-            -o "$JNI_OUT_DIR/libvosk_jni.so"
+            -o "$JNI_LIB"
 
+          cp "$JNI_LIB" "$JNI_OUT_DIR/"
           cp "$VOSK_SRC/src/libvosk.so" "$JNI_OUT_DIR/"
           cp "$VOSK_SRC/src/vosk_api.h" "$JNI_OUT_DIR/"
           cp "$VOSK_SRC/src/vosk_api.cc" "$JNI_OUT_DIR/vosk_api.cpp"
