@@ -44,6 +44,7 @@ jobs:
             swig
             unzip
             rsync
+            subversion
           )
           apt-get install -y --no-install-recommends "${packages[@]}"
 
