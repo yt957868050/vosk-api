@@ -7,6 +7,9 @@ jobs:
   build:
     runs-on: ubuntu-22.04-arm
     container: debian:buster
+    container:
+      image: debian:buster
+      options: --security-opt seccomp=unconfined
 
     steps:
       - name: Checkout repository
@@ -17,6 +20,9 @@ jobs:
         run: |
           set -euxo pipefail
           BUILD_ROOT="${RUNNER_TEMP}/vosk-build"
+          echo 'deb http://archive.debian.org/debian buster main' > /etc/apt/sources.list
+          echo 'deb http://archive.debian.org/debian-security buster/updates main' >> /etc/apt/sources.list
+          echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid
           apt-get update
           packages=(
             build-essential
